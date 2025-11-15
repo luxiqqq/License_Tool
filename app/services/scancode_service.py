@@ -3,6 +3,7 @@ import json
 import subprocess
 from typing import Dict
 import requests
+from copy import deepcopy
 
 # Percorso al binario di ScanCode
 SCANCODE_BIN = "/Users/gius03/tools/scancode-toolkit-v32.4.1/scancode"
@@ -39,8 +40,72 @@ def run_scancode(repo_path: str) -> dict:
         return json.load(f)
 
 def filter_with_llm(scancode_data: dict) -> dict:
-    minimal = build_minimal_json(scancode_data)
+    # Trova la licenza principale dal report di ScanCode
+    main_spdx = detect_main_license_scancode(scancode_data)
+
+    # Lavora su una copia per non modificare l'originale
+    data_to_filter = deepcopy(scancode_data)
+
+    # Se abbiamo una main license valida, rimuovila dal JSON che mandiamo all'LLM
+    if main_spdx and main_spdx != "UNKNOWN":
+        data_to_filter = _remove_main_license_from_scancode(data_to_filter, main_spdx)
+
+    minimal = build_minimal_json(data_to_filter)
     return ask_llm_to_filter_licenses(minimal)
+
+
+def _remove_main_license_from_scancode(data: dict, main_spdx: str) -> dict:
+    """
+    Rimuove riferimenti alla licenza principale (main_spdx) dal JSON di ScanCode.
+
+    Operazioni eseguite:
+    - Filtra la top-level `license_detections` eliminando entry con `license_expression_spdx == main_spdx`.
+    - Per ogni entry in `files`:
+      - rimuove `detected_license_expression_spdx` se coincide con main_spdx
+      - filtra `license_detections` interni con `license_expression_spdx == main_spdx`
+      - filtra `licenses` dove `spdx_license_key == main_spdx`
+
+    Restituisce una copia modificata di `data`.
+    """
+
+    # Protezione: se non ci sono dati, ritorna com'è
+    if not isinstance(data, dict):
+        return data
+
+    # Filtra top-level license_detections
+    if "license_detections" in data and isinstance(data["license_detections"], list):
+        data["license_detections"] = [
+            d for d in data["license_detections"]
+            if (d.get("license_expression_spdx") or d.get("license_expression_spdx") is not None) and d.get("license_expression_spdx") != main_spdx
+        ]
+
+    # Processa le singole file entries
+    files = data.get("files")
+    if isinstance(files, list):
+        for entry in files:
+            if not isinstance(entry, dict):
+                continue
+
+            # rimuovi campo detected_license_expression_spdx se è la main
+            if entry.get("detected_license_expression_spdx") == main_spdx:
+                entry.pop("detected_license_expression_spdx", None)
+
+            # filtra license_detections nella singola file
+            if "license_detections" in entry and isinstance(entry["license_detections"], list):
+                entry["license_detections"] = [
+                    d for d in entry["license_detections"]
+                    if d.get("license_expression_spdx") != main_spdx
+                ]
+
+            # filtra la sezione licenses
+            if "licenses" in entry and isinstance(entry["licenses"], list):
+                entry["licenses"] = [
+                    l for l in entry["licenses"]
+                    if l.get("spdx_license_key") != main_spdx
+                ]
+
+    return data
+
 
 def build_minimal_json(scancode_data: dict) -> dict:
     """
@@ -94,7 +159,6 @@ def _call_ollama_gpt(prompt: json) -> str:
 
 
 
-#TODO: il prompt deve analizzare solo il matched_text e bisogna fare attenzione all'putput JSON perchè è diverso dal JSON di scancode
 def ask_llm_to_filter_licenses(minimal_json: dict) -> dict:
     """
     Manda il JSON ridotto al LLM e ritorna il JSON pulito
@@ -175,6 +239,7 @@ Ecco il JSON da analizzare:
         return json.loads(llm_response)
     except json.JSONDecodeError:
         raise RuntimeError("Il modello ha restituito una risposta non valida")
+
 
 
 
@@ -268,4 +333,3 @@ def extract_file_licenses_from_llm(llm_data: dict) -> Dict[str, str]:
             results[path] = " OR ".join(unique_spdx)
 
     return results
-
