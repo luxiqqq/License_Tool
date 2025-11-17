@@ -6,18 +6,8 @@ from license_expression import Licensing
 
 licensing = Licensing()
 
-# Percorso della matrice estesa in JSON (sottinsieme ispirato a OSADL)
-_OSADL_MATRIX_PATH = os.path.join(os.path.dirname(__file__), "osadl_matrix.json")
-
-# Fallback minimale (compatibilità binaria) usato se il JSON non è disponibile.
-_FALLBACK_BINARY_MATRIX = {
-    "MIT": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"],
-    "Apache-2.0": ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause"],
-    "BSD-3-Clause": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"],
-    "BSD-2-Clause": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"],
-    "GPL-3.0-only": ["GPL-3.0-only", "GPL-3.0-or-later"],
-    "GPL-3.0-or-later": ["GPL-3.0-only", "GPL-3.0-or-later"],
-}
+# Percorso della matrice professionale
+_MATRIXSEQEXPL_PATH = os.path.join(os.path.dirname(__file__), "matrixseqexpl.json")
 
 # Alias/sinonimi comuni -> forma canonica usata nella matrice
 _SYNONYMS = {
@@ -46,22 +36,21 @@ def _normalize_symbol(sym: str) -> str:
     return _SYNONYMS.get(s, s)
 
 
-def _load_osadl_matrix() -> Dict[str, Dict[str, str]]:
+def _load_professional_matrix() -> dict:
     """
-    Carica la matrice stile OSADL da JSON e restituisce un dict:
-      { main_spdx: { dep_spdx: "yes"|"no"|"conditional" } }
-
-    Se il file non è presente o invalido, ritorna una conversione del
-    fallback binario in tri-stato (yes per le voci consentite, no per il resto).
+    Carica la matrice professionale (matrixseqexpl.json) se presente e valida.
+    Supporta sia la vecchia struttura (dict annidato) sia la nuova (lista di oggetti con compatibilities),
+    sia la struttura con chiave 'licenses'.
+    Restituisce un dict vuoto se non valida/non presente.
     """
     try:
-        if os.path.exists(_OSADL_MATRIX_PATH):
-            with open(_OSADL_MATRIX_PATH, "r", encoding="utf-8") as f:
+        if os.path.exists(_MATRIXSEQEXPL_PATH):
+            with open(_MATRIXSEQEXPL_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            matrix = data.get("matrix")
-            if isinstance(matrix, dict) and matrix:
-                # normalizza chiavi come stringhe precise
-                normalized: Dict[str, Dict[str, str]] = {}
+            # Se è già un dict annidato, usa la logica precedente
+            if isinstance(data, dict) and "matrix" in data and isinstance(data["matrix"], dict):
+                matrix = data["matrix"]
+                normalized = {}
                 for main, row in matrix.items():
                     if not isinstance(row, dict):
                         continue
@@ -69,32 +58,66 @@ def _load_osadl_matrix() -> Dict[str, Dict[str, str]]:
                     normalized[main_n] = {}
                     for k, v in row.items():
                         if v in {"yes", "no", "conditional"}:
-                            normalized[_normalize_symbol(main_n)][_normalize_symbol(k)] = v
+                            normalized[main_n][_normalize_symbol(k)] = v
+                if normalized:
+                    return normalized
+            # Nuova struttura: lista di oggetti con name e compatibilities
+            elif isinstance(data, list):
+                normalized = {}
+                for entry in data:
+                    main = entry.get("name")
+                    compat_list = entry.get("compatibilities", [])
+                    if not main or not isinstance(compat_list, list):
+                        continue
+                    main_n = _normalize_symbol(main)
+                    normalized[main_n] = {}
+                    for comp in compat_list:
+                        dep = comp.get("name")
+                        status = comp.get("compatibility")
+                        if dep and status in {"Yes", "No", "Conditional", "Same", "Unknown"}:
+                            # Mappa i valori in minuscolo per coerenza col resto del codice
+                            if status == "Yes" or status == "Same":
+                                v = "yes"
+                            elif status == "No":
+                                v = "no"
+                            elif status == "Conditional":
+                                v = "conditional"
+                            else:
+                                v = "unknown"
+                            normalized[main_n][_normalize_symbol(dep)] = v
+                if normalized:
+                    return normalized
+            # Nuova struttura: dict con chiave 'licenses' che contiene la lista
+            elif isinstance(data, dict) and "licenses" in data and isinstance(data["licenses"], list):
+                normalized = {}
+                for entry in data["licenses"]:
+                    main = entry.get("name")
+                    compat_list = entry.get("compatibilities", [])
+                    if not main or not isinstance(compat_list, list):
+                        continue
+                    main_n = _normalize_symbol(main)
+                    normalized[main_n] = {}
+                    for comp in compat_list:
+                        dep = comp.get("name")
+                        status = comp.get("compatibility")
+                        if dep and status in {"Yes", "No", "Conditional", "Same", "Unknown"}:
+                            if status == "Yes" or status == "Same":
+                                v = "yes"
+                            elif status == "No":
+                                v = "no"
+                            elif status == "Conditional":
+                                v = "conditional"
+                            else:
+                                v = "unknown"
+                            normalized[main_n][_normalize_symbol(dep)] = v
                 if normalized:
                     return normalized
     except Exception:
-        # qualsiasi problema -> si passa al fallback
         pass
+    return {}  # restituisce sempre un dict
 
-    # Costruzione fallback tri-stato: yes per consentite, no per altre conosciute nelle chiavi
-    mains = set(_FALLBACK_BINARY_MATRIX.keys())
-    all_syms = set()
-    for allowed in _FALLBACK_BINARY_MATRIX.values():
-        all_syms.update(allowed)
-    all_syms.update(mains)
-
-    fallback_tristate: Dict[str, Dict[str, str]] = {}
-    for main, allowed in _FALLBACK_BINARY_MATRIX.items():
-        row: Dict[str, str] = {}
-        allowed_set = set(allowed)
-        for sym in all_syms:
-            row[_normalize_symbol(sym)] = "yes" if sym in allowed_set else "no"
-        fallback_tristate[_normalize_symbol(main)] = row
-    return fallback_tristate
-
-
-# Carica una sola volta
-_OSADL_MATRIX = _load_osadl_matrix()
+# Carica una sola volta la matrice professionale
+_PRO_MATRIX = _load_professional_matrix()
 
 
 # ---------------------- Parser SPDX semplice (AND/OR/WITH) ----------------------
@@ -138,6 +161,7 @@ def _tokenize(expr: str) -> List[str]:
     i = 0
     while i < len(s):
         ch = s[i]
+        assert isinstance(ch, str) and len(ch) == 1  # chiarisce che ch è un carattere
         if ch in "()":
             if buf:
                 tokens.append("".join(buf))
@@ -239,7 +263,9 @@ Tri = str  # alias semantico: "yes" | "no" | "conditional" | "unknown"
 
 
 def _lookup_status(main_license: str, dep_license: str) -> Tri:
-    row = _OSADL_MATRIX.get(main_license)
+    if not _PRO_MATRIX:
+        return "unknown"
+    row = _PRO_MATRIX.get(main_license)
     if not row:
         return "unknown"
     # tentativi di lookup con varie normalizzazioni
@@ -318,26 +344,10 @@ def _extract_symbols(expr: str) -> List[str]:
 def check_compatibility(main_license: str, file_licenses: Dict[str, str]) -> dict:
     """
     Calcola la compatibilità tra la licenza principale e le licenze dei singoli file
-    usando una matrice estesa (ispirata a OSADL) e valutando correttamente
-    le espressioni SPDX con AND/OR/WITH.
-
-    Restituisce:
-    {
-        "main_license": <spdx>,
-        "issues": [
-            {
-                "file_path": "...",
-                "detected_license": "...",
-                "compatible": True/False,
-                "reason": "..."
-            }
-        ]
-    }
+    usando esclusivamente la matrice professionale (matrixseqexpl.json).
+    Se la matrice non è presente o la licenza principale non è coperta, segnala l'impossibilità di valutare.
     """
-
     issues = []
-
-    # normalizza la licenza principale
     main_license_n = _normalize_symbol(main_license)
 
     # Caso 1: nessuna licenza principale trovata
@@ -354,14 +364,14 @@ def check_compatibility(main_license: str, file_licenses: Dict[str, str]) -> dic
             "issues": issues,
         }
 
-    # Verifica se la licenza principale è coperta dalla matrice
-    if main_license_n not in _OSADL_MATRIX:
+    # Caso 2: matrice non disponibile o licenza principale non coperta
+    if not _PRO_MATRIX or main_license_n not in _PRO_MATRIX:
         for file_path, license_expr in file_licenses.items():
             issues.append({
                 "file_path": file_path,
                 "detected_license": license_expr,
                 "compatible": False,
-                "reason": f"Licenza principale {main_license_n} non presente nella matrice di compatibilità",
+                "reason": "Matrice professionale non disponibile o licenza principale non presente nella matrice",
             })
         return {
             "main_license": main_license_n,
