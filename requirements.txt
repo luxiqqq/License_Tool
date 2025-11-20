@@ -1,9 +1,10 @@
 fastapi~=0.121.1
 uvicorn[standard]
-gitpython
-python-dotenv
-requests
+gitpython~=3.1.45
+python-dotenv~=1.2.1
+requests~=2.32.5
 license-expression
-pydantic
+pydantic~=2.12.4
 
 app~=0.0.1
+httpx~=0.28.1

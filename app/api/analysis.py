@@ -1,69 +1,83 @@
+# app/api/analysis.py
+import httpx
 from fastapi import APIRouter, HTTPException
-from app.models.schemas import AnalyzeRequest, AnalyzeResponse, LicenseIssue
-from app.services.github_client import clone_repo
-from app.services.scancode_service import (
-    run_scancode,
-    detect_main_license_scancode,
-    extract_file_licenses_from_llm, filter_with_llm,
-)
-from app.services.compatibility import check_compatibility
-from app.services.llm_helper import enrich_with_llm_suggestions
-from app.services.report_service import generate_report
+from fastapi.responses import RedirectResponse, JSONResponse
 
+from app.core.config import GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, CALLBACK_URL
+from app.services.analysis_workflow import run_analysis_logic
+from app.models.schemas import AnalyzeResponse
 
 router = APIRouter()
 
+# ------------------------------------------------------------------
+# 1. START: Qui inserisci OWNER e REPO (come facevi nel JSON)
+# ------------------------------------------------------------------
+@router.get("/auth/start")
+def start_analysis(owner: str, repo: str):
+    """
+    Esempio: /api/auth/start?owner=facebook&repo=react
+    """
+    # Impacchettiamo i due dati in una stringa unica per il viaggio
+    state_data = f"{owner}:{repo}"
 
-@router.post("/analyze", response_model=AnalyzeResponse)
-def analyze_repository(payload: AnalyzeRequest):
-    # 1) Clona il repo
-    clone_result = clone_repo(payload.owner, payload.repo)
-    if not clone_result.success:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Errore clonazione: {clone_result.error}",
-        )
+    scope = "repo" # Serve 'repo' anche per leggere repo pubbliche senza limiti severi
 
-    repo_path = clone_result.repo_path
-
-    # 2) Esegui ScanCode
-    scan_raw = run_scancode(repo_path)
-
-    # 3) MAIN LICENSE
-    main_license = detect_main_license_scancode(scan_raw)
-
-    # JSON filtrato dall’LLM
-    llm_clean = filter_with_llm(scan_raw)
-
-    # 4) LICENZE PER FILE (da LLM)
-    file_licenses = extract_file_licenses_from_llm(llm_clean)
-
-    # 5) Verifica compatibilità
-    compatibility = check_compatibility(main_license, file_licenses)
-
-    # 6) Aggiungi suggerimenti AI
-    enriched_issues = enrich_with_llm_suggestions(compatibility["issues"])
-
-    # 7) Converti in oggetti Pydantic per report + risposta
-    license_issue_models = [
-        LicenseIssue(
-            file_path=i["file_path"],
-            detected_license=i["detected_license"],
-            compatible=i["compatible"],
-            reason=i.get("reason"),
-            suggestion=i.get("suggestion"),
-            regenerated_code_path=i.get("regenerated_code_path"),
-        )
-        for i in enriched_issues
-    ]
-
-    # 8) Genera report testo su disco
-    report_path = generate_report(repo_path, main_license, license_issue_models)
-
-    # 9) Risposta JSON
-    return AnalyzeResponse(
-        repository=f"{payload.owner}/{payload.repo}",
-        main_license=main_license,
-        issues=license_issue_models,
-        report_path=report_path,
+    github_url = (
+        f"https://github.com/login/oauth/authorize"
+        f"?client_id={GITHUB_CLIENT_ID}"
+        f"&redirect_uri={CALLBACK_URL}"
+        f"&scope={scope}"
+        f"&state={state_data}"  # <--- Qui viaggiano owner e repo insieme
     )
+    return RedirectResponse(github_url)
+
+
+# ------------------------------------------------------------------
+# 2. CALLBACK: GitHub torna qui dopo il login
+# ------------------------------------------------------------------
+@router.get("/callback", response_model=AnalyzeResponse)
+async def auth_callback(code: str, state: str):
+    """
+    Riceve il codice e lo stato (che contiene "owner:repo").
+    """
+    # 1. SPACCHETTIAMO i dati originali
+    try:
+        target_owner, target_repo = state.split(":")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Stato non valido. Formato atteso 'owner:repo'")
+
+    async with httpx.AsyncClient() as client:
+        # 2. Otteniamo il Token dell'utente che sta facendo la richiesta
+        token_resp = await client.post(
+            "https://github.com/login/oauth/access_token",
+            json={
+                "client_id": GITHUB_CLIENT_ID,
+                "client_secret": GITHUB_CLIENT_SECRET,
+                "code": code
+            },
+            headers={"Accept": "application/json"}
+        )
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Login fallito: impossibile ottenere token")
+
+    # 3. LANCIA L'ANALISI
+    # Usiamo:
+    # - target_owner: l'autore della repo (es. 'facebook')
+    # - target_repo: il nome della repo (es. 'react')
+    # - access_token: il token dell'utente (TU) che sta facendo l'analisi
+
+    try:
+        result = run_analysis_logic(
+            owner=target_owner,
+            repo=target_repo,
+            oauth_token=access_token
+        )
+        return result
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore interno: {str(e)}")

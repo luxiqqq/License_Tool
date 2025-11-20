@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# token
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+# authentication
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+CALLBACK_URL = os.getenv("CALLBACK_URL", "http://localhost:8000/api/callback") # Nota il /api se usi il prefix
 
 # api url and models
 OLLAMA_URL = os.getenv("OLLAMA_URL")
