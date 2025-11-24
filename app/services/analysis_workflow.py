@@ -9,10 +9,12 @@ from app.services.scancode_service import (
 from app.services.compatibility import check_compatibility
 from app.services.llm_helper import enrich_with_llm_suggestions
 from app.services.report_service import generate_report
+from app.core.config import CLONE_BASE_DIR
+import os
 
-def run_analysis_logic(owner: str, repo: str, oauth_token: str) -> AnalyzeResponse:
+def perform_initial_scan(owner: str, repo: str, oauth_token: str) -> AnalyzeResponse:
     """
-    Esegue l'intera pipeline: Clone -> Scan -> LLM -> Report
+    Esegue la prima parte della pipeline: Clone -> Scan -> LLM -> Report (senza rigenerazione).
     """
     # 1) Clona il repo (con token dinamico)
     clone_result = clone_repo(owner, repo, oauth_token)
@@ -34,35 +36,72 @@ def run_analysis_logic(owner: str, repo: str, oauth_token: str) -> AnalyzeRespon
     # 5) Compatibilità (Prima Passata)
     compatibility = check_compatibility(main_license, file_licenses)
 
+    # 6) Suggerimenti AI (senza rigenerazione per ora)
+    # Passiamo una mappa vuota perché non abbiamo ancora rigenerato nulla
+    enriched_issues = enrich_with_llm_suggestions(compatibility["issues"], {})
+
+    # 7) Mapping Pydantic
+    license_issue_models = [
+        LicenseIssue(
+            file_path=i["file_path"],
+            detected_license=i["detected_license"],
+            compatible=i["compatible"],
+            reason=i.get("reason"),
+            suggestion=i.get("suggestion"),
+            regenerated_code_path=i.get("regenerated_code_path"),
+        )
+        for i in enriched_issues
+    ]
+
+    # 8) Genera report su disco
+    report_path = generate_report(repo_path, main_license, license_issue_models)
+
+    return AnalyzeResponse(
+        repository=f"{owner}/{repo}",
+        main_license=main_license,
+        issues=license_issue_models,
+        report_path=report_path,
+    )
+
+
+def perform_regeneration(owner: str, repo: str) -> AnalyzeResponse:
+    """
+    Esegue la logica di rigenerazione su una repo GIÀ clonata.
+    """
+    # Ricostruiamo il path (assumendo che la repo sia lì)
+    repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
+    
+    if not os.path.exists(repo_path):
+        raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la scansione iniziale.")
+
+    # Rieseguiamo una scansione rapida per avere lo stato attuale (potrebbe essere ridondante ma sicuro)
+    scan_raw = run_scancode(repo_path)
+    main_license = detect_main_license_scancode(scan_raw)
+    llm_clean = filter_with_llm(scan_raw)
+    file_licenses = extract_file_licenses_from_llm(llm_clean)
+    compatibility = check_compatibility(main_license, file_licenses)
+
     # --- LOGICA DI RIGENERAZIONE ---
     regenerated_files_map = {}  # file_path -> new_code_content
     files_to_regenerate = []
 
-    # Identifica file incompatibili che sono codice sorgente
-    # (Escludiamo .txt, .md, LICENSE, ecc. per semplicità o estendiamo la logica)
-    # Qui assumiamo che se è in 'file_licenses' è stato scansionato come codice o simile.
-    # Ma per sicurezza filtriamo estensioni note se necessario.
-    # Per ora proviamo a rigenerare tutto ciò che è incompatibile.
     for issue in compatibility["issues"]:
         if not issue["compatible"]:
             fpath = issue["file_path"]
-            # Esempio filtro estensioni (opzionale, ma consigliato)
+            # Esempio filtro estensioni
             if not fpath.lower().endswith(('.txt', '.md', 'license', 'copying', '.rst')):
                 files_to_regenerate.append(issue)
 
     if files_to_regenerate:
         print(f"Trovati {len(files_to_regenerate)} file incompatibili da rigenerare...")
         from app.services.code_generator import regenerate_code
-        import os
 
         for issue in files_to_regenerate:
             fpath = issue["file_path"]
             
-            # Tentativo di correzione path se scancode include la root dir
+            # Tentativo di correzione path
             repo_name = os.path.basename(os.path.normpath(repo_path))
             if fpath.startswith(f"{repo_name}/"):
-                # Se fpath è "repo/file.py" e repo_path è ".../repo", dobbiamo togliere "repo/" da fpath
-                # oppure unire con dirname(repo_path)
                 abs_path = os.path.join(os.path.dirname(repo_path), fpath)
             else:
                 abs_path = os.path.join(repo_path, fpath)
@@ -89,20 +128,16 @@ def run_analysis_logic(owner: str, repo: str, oauth_token: str) -> AnalyzeRespon
                 except Exception as e:
                     print(f"Errore rigenerazione {fpath}: {e}")
 
-        # Se abbiamo rigenerato qualcosa, rieseguiamo la scansione
+        # Se abbiamo rigenerato qualcosa, rieseguiamo la scansione finale
         if regenerated_files_map:
             print("Riesecuzione scansione post-rigenerazione...")
-            # 2-bis) ScanCode
             scan_raw = run_scancode(repo_path)
-            # 3-bis) Main License (potrebbe essere cambiata? improbabile, ma ricalcoliamo)
-            main_license = detect_main_license_scancode(scan_raw)
-            # 4-bis) Filtro LLM
+            # main_license = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
             llm_clean = filter_with_llm(scan_raw)
             file_licenses = extract_file_licenses_from_llm(llm_clean)
-            # 5-bis) Compatibilità
             compatibility = check_compatibility(main_license, file_licenses)
 
-    # 6) Suggerimenti AI
+    # 6) Suggerimenti AI (con mappa rigenerati)
     enriched_issues = enrich_with_llm_suggestions(compatibility["issues"], regenerated_files_map)
 
     # 7) Mapping Pydantic

@@ -1,10 +1,10 @@
 # app/api/analysis.py
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from app.core.config import GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, CALLBACK_URL
-from app.services.analysis_workflow import run_analysis_logic
+from app.services.analysis_workflow import perform_initial_scan, perform_regeneration
 from app.models.schemas import AnalyzeResponse
 
 router = APIRouter()
@@ -63,20 +63,33 @@ async def auth_callback(code: str, state: str):
         if not access_token:
             raise HTTPException(status_code=400, detail="Login fallito: impossibile ottenere token")
 
-    # 3. LANCIA L'ANALISI
-    # Usiamo:
-    # - target_owner: l'autore della repo (es. 'facebook')
-    # - target_repo: il nome della repo (es. 'react')
-    # - access_token: il token dell'utente (TU) che sta facendo l'analisi
-
+    # 3. LANCIA L'ANALISI INIZIALE (Senza rigenerazione)
     try:
-        result = run_analysis_logic(
+        result = perform_initial_scan(
             owner=target_owner,
             repo=target_repo,
             oauth_token=access_token
         )
         return result
 
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore interno: {str(e)}")
+
+
+# ------------------------------------------------------------------
+# 3. REGENERATE: Endpoint per lanciare la rigenerazione
+# ------------------------------------------------------------------
+@router.post("/regenerate", response_model=AnalyzeResponse)
+def regenerate_analysis(owner: str = Body(...), repo: str = Body(...)):
+    """
+    Lancia la rigenerazione su una repo già clonata.
+    Richiede che '/callback' (o comunque la scansione iniziale) sia stata eseguita prima.
+    """
+    try:
+        result = perform_regeneration(owner=owner, repo=repo)
+        return result
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
