@@ -4,8 +4,8 @@ from fastapi import APIRouter, HTTPException, Body
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from app.core.config import GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, CALLBACK_URL
-from app.services.analysis_workflow import perform_initial_scan, perform_regeneration
-from app.models.schemas import AnalyzeResponse
+from app.services.analysis_workflow import perform_cloning, perform_initial_scan, perform_regeneration
+from app.models.schemas import AnalyzeResponse, CloneResult
 
 router = APIRouter()
 
@@ -35,7 +35,7 @@ def start_analysis(owner: str, repo: str):
 # ------------------------------------------------------------------
 # 2. CALLBACK: GitHub torna qui dopo il login
 # ------------------------------------------------------------------
-@router.get("/callback", response_model=AnalyzeResponse)
+@router.get("/callback")
 async def auth_callback(code: str, state: str):
     """
     Riceve il codice e lo stato (che contiene "owner:repo").
@@ -61,17 +61,48 @@ async def auth_callback(code: str, state: str):
         access_token = token_data.get("access_token")
 
         if not access_token:
-            raise HTTPException(status_code=400, detail="Login fallito: impossibile ottenere token")
+            print(f"DEBUG: Token exchange failed. Response: {token_data}")
+            raise HTTPException(status_code=400, detail=f"Login fallito: impossibile ottenere token. GitHub dice: {token_data.get('error_description', token_data)}")
 
-    # 3. LANCIA L'ANALISI INIZIALE (Senza rigenerazione)
+    # 3. ESEGUE SOLO LA CLONAZIONE
     try:
-        result = perform_initial_scan(
+        repo_path = perform_cloning(
             owner=target_owner,
             repo=target_repo,
             oauth_token=access_token
         )
-        return result
+        # Ritorniamo info di base per permettere al frontend di chiamare /analyze
+        return {
+            "status": "cloned",
+            "owner": target_owner,
+            "repo": target_repo,
+            "local_path": repo_path
+        }
 
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore interno: {str(e)}")
+
+
+# ------------------------------------------------------------------
+# 4. ANALYZE: Endpoint per lanciare l'analisi (dopo clonazione)
+# ------------------------------------------------------------------
+@router.post("/analyze", response_model=AnalyzeResponse)
+def run_analysis(payload: dict = Body(...)):
+    """
+    Esegue l'analisi su una repo già clonata.
+    Payload atteso: {"owner": "...", "repo": "..."}
+    """
+    owner = payload.get("owner")
+    repo = payload.get("repo")
+    
+    if not owner or not repo:
+        raise HTTPException(status_code=400, detail="Owner e Repo obbligatori")
+
+    try:
+        result = perform_initial_scan(owner=owner, repo=repo)
+        return result
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:

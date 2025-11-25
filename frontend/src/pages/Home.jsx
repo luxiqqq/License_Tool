@@ -47,7 +47,7 @@ const Home = () => {
                     <button type="submit" className="glass-button" disabled={loading}>
                         {loading ? 'Redirecting...' : (
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                Analyze Repository <ArrowRight size={16} />
+                                Clone Repository <ArrowRight size={16} />
                             </span>
                         )}
                     </button>

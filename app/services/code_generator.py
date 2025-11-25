@@ -21,6 +21,19 @@ def regenerate_code(
         f"Restituisci SOLO il codice rigenerato, senza markdown (```) e senza spiegazioni verbali extra. Il codice deve essere pronto per essere salvato su file."
     )
     try:
-        return _call_ollama(prompt)
+        response = _call_ollama(prompt)
+        if not response:
+            return None
+            
+        # Pulizia Markdown se presente
+        clean_response = response.strip()
+        if clean_response.startswith("```"):
+            # Rimuove la prima riga (```python o simile)
+            clean_response = clean_response.split("\n", 1)[1]
+            # Rimuove l'ultima riga (```)
+            if clean_response.endswith("```"):
+                clean_response = clean_response.rsplit("\n", 1)[0]
+        
+        return clean_response.strip()
     except Exception:
         return None

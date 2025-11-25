@@ -63,6 +63,7 @@ def filter_with_llm(scancode_data: dict) -> dict:
         data_to_filter = _remove_main_license_from_scancode(data_to_filter, main_spdx)
 
     minimal = build_minimal_json(data_to_filter)
+    
     return ask_llm_to_filter_licenses(minimal)
 
 
@@ -121,35 +122,39 @@ def _remove_main_license_from_scancode(data: dict, main_spdx: str) -> dict:
 
 def build_minimal_json(scancode_data: dict) -> dict:
     """
-    Costruisce un JSON minimale per il modello LLM,
-    rimuovendo completamente la sezione 'files'.
-    Mantiene SOLO:
-    - headers
-    - license_detections (con reference_matches → matched_text)
+    Costruisce un JSON minimale raggruppato per file.
+    Invece di usare la lista globale 'license_detections' (che richiede al LLM di raggruppare),
+    iteriamo direttamente sui file e raccogliamo i loro match.
     """
+    minimal = {"files": []}
 
-    minimal = {
-        "headers": scancode_data.get("headers", []),
-        "license_detections": []
-    }
+    # Iteriamo sui file (che sono già stati filtrati da _remove_main_license_from_scancode)
+    for file_entry in scancode_data.get("files", []):
+        path = file_entry.get("path")
+        if not path:
+            continue
 
-    for det in scancode_data.get("license_detections", []):
-        new_det = {
-            "identifier": det.get("identifier"),
-            "license_expression_spdx": det.get("license_expression_spdx"),
-            "reference_matches": []
-        }
+        file_matches = []
+        
+        # ScanCode file-level detections
+        for det in file_entry.get("license_detections", []):
+            spdx = det.get("license_expression_spdx")
+            
+            # 'matches' contiene i dettagli (start_line, end_line, matched_text)
+            for match in det.get("matches", []):
+                file_matches.append({
+                    "license_spdx": spdx,
+                    "matched_text": match.get("matched_text"),
+                    "start_line": match.get("start_line"),
+                    "end_line": match.get("end_line"),
+                    "score": match.get("score")
+                })
 
-        for rm in det.get("reference_matches", []):
-            new_det["reference_matches"].append({
-                "from_file": rm.get("from_file"),
-                "start_line": rm.get("start_line"),
-                "end_line": rm.get("end_line"),
-                "matched_text": rm.get("matched_text"),
-                "license_spdx": rm.get("license_expression_spdx")
+        if file_matches:
+            minimal["files"].append({
+                "path": path,
+                "matches": file_matches
             })
-
-        minimal["license_detections"].append(new_det)
 
     return minimal
 
@@ -164,17 +169,14 @@ def ask_llm_to_filter_licenses(minimal_json: dict) -> dict:
     prompt = f"""
 Sei un esperto di licenze open source.
 
-Ti fornisco un JSON che contiene vari match rilevati da ScanCode.
-Ogni match ha vari campi, ma tu devi analizzare SOLO:
+Ti fornisco un JSON contenente una lista di FILE, ognuno con i suoi MATCH di licenza rilevati.
+Il tuo compito è analizzare ogni match e decidere se è valido o meno.
 
+ANALIZZA SOLO:
     matched_text  (per capire se è una licenza)
     license_spdx  (per validità del nome della licenza)
 
-Gli altri campi:
-- start_line
-- end_line
-- path
-sono solo metadati e NON influenzano la decisione logica.
+Gli altri campi (start_line, end_line, path) sono metadati.
 
 ────────────────────────────────────────
 CRITERIO DI FILTRO (usa matched_text + license_spdx)

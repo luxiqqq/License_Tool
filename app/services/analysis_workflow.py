@@ -12,19 +12,31 @@ from app.services.report_service import generate_report
 from app.core.config import CLONE_BASE_DIR
 import os
 
-def perform_initial_scan(owner: str, repo: str, oauth_token: str) -> AnalyzeResponse:
+def perform_cloning(owner: str, repo: str, oauth_token: str) -> str:
     """
-    Esegue la prima parte della pipeline: Clone -> Scan -> LLM -> Report (senza rigenerazione).
+    Esegue SOLO la clonazione del repository.
+    Ritorna il path locale della repo clonata.
     """
-    # 1) Clona il repo (con token dinamico)
     clone_result = clone_repo(owner, repo, oauth_token)
     if not clone_result.success:
         raise ValueError(f"Errore clonazione: {clone_result.error}")
+    
+    return clone_result.repo_path
 
-    repo_path = clone_result.repo_path
+
+def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
+    """
+    Esegue la scansione su una repo GIÀ clonata (da perform_cloning).
+    """
+    # Ricostruiamo il path (assumendo che la repo sia lì)
+    repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
+    
+    if not os.path.exists(repo_path):
+        raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la clonazione.")
 
     # 2) Esegui ScanCode
     scan_raw = run_scancode(repo_path)
+    
 
     # 3) Main License
     main_license = detect_main_license_scancode(scan_raw)
@@ -32,11 +44,11 @@ def perform_initial_scan(owner: str, repo: str, oauth_token: str) -> AnalyzeResp
     # 4) Filtro LLM
     llm_clean = filter_with_llm(scan_raw)
     file_licenses = extract_file_licenses_from_llm(llm_clean)
-    print(file_licenses)
+
 
     # 5) Compatibilità (Prima Passata)
     compatibility = check_compatibility(main_license, file_licenses)
-    print(compatibility)
+   
 
     # 6) Suggerimenti AI (senza rigenerazione per ora)
     # Passiamo una mappa vuota perché non abbiamo ancora rigenerato nulla
@@ -73,6 +85,9 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     """
     # Ricostruiamo il path (assumendo che la repo sia lì)
     repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
+    print("\n\n")
+    print(repo_path)
+    print("\n\n")
     
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la scansione iniziale.")
@@ -121,13 +136,15 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
                         detected_license=issue.detected_license
                     )
 
-                    if new_code:
+                    if new_code and len(new_code.strip()) > 10:
                         # Sovrascrittura file
                         with open(abs_path, "w", encoding="utf-8") as f:
                             f.write(new_code)
                         
                         regenerated_files_map[fpath] = new_code
-                        print(f"Rigenerato: {fpath}")
+                        print(f"Rigenerato: {fpath} (Length: {len(new_code)})")
+                    else:
+                        print(f"Rigenerazione fallita o codice non valido per {fpath}")
                 except Exception as e:
                     print(f"Errore rigenerazione {fpath}: {e}")
 
@@ -137,8 +154,13 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
             scan_raw = run_scancode(repo_path)
             # main_license = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
             llm_clean = filter_with_llm(scan_raw)
+            print("\n\n")
+            print(llm_clean)
             file_licenses = extract_file_licenses_from_llm(llm_clean)
             compatibility = check_compatibility(main_license, file_licenses)
+
+            print("\n\n")
+            print(compatibility)
             
             # Aggiorniamo la lista di issues con i nuovi risultati
             # check_compatibility ritorna un dict con "issues": [dict, dict...]
