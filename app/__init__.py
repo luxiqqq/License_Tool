@@ -1,0 +1,3 @@
+"""
+License Checker Application
+"""
