@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Add Ollama host configuration and ensure Ollama service readiness in llm_helper">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Update Ollama host configuration to include version and tags endpoints">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/llm_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/llm_helper.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -270,7 +267,7 @@
       <workItem from="1763736267370" duration="39000" />
       <workItem from="1763736308172" duration="86000" />
       <workItem from="1764167920726" duration="4205000" />
-      <workItem from="1764172196408" duration="1500000" />
+      <workItem from="1764172196408" duration="1903000" />
     </task>
     <task id="LOCAL-00001" summary="Add license compatibility checker with analysis and reporting features">
       <option name="closed" value="true" />
@@ -432,7 +429,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764172605383</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="feat: Update Ollama host configuration to include version and tags endpoints">
+      <option name="closed" value="true" />
+      <created>1764173721294</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1764173721294</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -476,7 +481,8 @@
     <MESSAGE value="chore: Update environment configuration for Windows paths and enhance repository cloning logic" />
     <MESSAGE value="refactor: Remove debug JSON output from scancode_service and update workspace configuration" />
     <MESSAGE value="feat: Add Ollama host configuration and ensure Ollama service readiness in llm_helper" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Add Ollama host configuration and ensure Ollama service readiness in llm_helper" />
+    <MESSAGE value="feat: Update Ollama host configuration to include version and tags endpoints" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Update Ollama host configuration to include version and tags endpoints" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
