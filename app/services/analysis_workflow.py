@@ -4,7 +4,8 @@ from app.services.github_client import clone_repo
 from app.services.scancode_service import (
     run_scancode,
     detect_main_license_scancode,
-    extract_file_licenses_from_llm, filter_with_llm,
+    extract_file_licenses_from_llm,
+    filter_with_llm,
 )
 from app.services.compatibility import check_compatibility
 from app.services.llm_helper import enrich_with_llm_suggestions
@@ -39,10 +40,10 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     
 
     # 3) Main License
-    main_license = detect_main_license_scancode(scan_raw)
+    main_license, path_license = detect_main_license_scancode(scan_raw)
 
     # 4) Filtro LLM
-    llm_clean = filter_with_llm(scan_raw)
+    llm_clean = filter_with_llm(scan_raw, main_license, path_license)
     file_licenses = extract_file_licenses_from_llm(llm_clean)
 
 
@@ -152,8 +153,8 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
         if regenerated_files_map:
             print("Riesecuzione scansione post-rigenerazione...")
             scan_raw = run_scancode(repo_path)
-            # main_license = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
-            llm_clean = filter_with_llm(scan_raw)
+            main_license, path = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
+            llm_clean = filter_with_llm(scan_raw, main_license, path)
             print("\n\n")
             print(llm_clean)
             file_licenses = extract_file_licenses_from_llm(llm_clean)
