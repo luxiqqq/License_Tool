@@ -62,7 +62,7 @@ def _pull_model(model_name: str, timeout: int = 600) -> None:
 # Garantisce che Ollama sia in esecuzione e che il modello richiesto sia presente.
 def ensure_ollama_ready(model_name: str, start_if_needed: bool = True, pull_if_needed: bool = True) -> None:
     """
-    Controlla e, se necessario, avvia Ollama e scarica il modello.
+    Garantisce che Ollama sia in esecuzione e che il modello sia presente.
     Lancia RuntimeError se non è possibile rendere l'ambiente pronto.
     """
     if not _is_ollama_running():
