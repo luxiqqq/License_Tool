@@ -53,6 +53,7 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
 
     # 6) Suggerimenti AI (senza rigenerazione per ora)
     # Passiamo una mappa vuota perché non abbiamo ancora rigenerato nulla
+    # TODO: pass empty regenerated map for now (nessuna AI presente)
     enriched_issues = enrich_with_llm_suggestions(compatibility["issues"], {})
 
     # 7) Mapping Pydantic
@@ -150,15 +151,14 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
         if regenerated_files_map:
             print("Riesecuzione scansione post-rigenerazione...")
             scan_raw = run_scancode(repo_path)
-            main_license, path = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
-            llm_clean = filter_with_llm(scan_raw, main_license, path)
-            print("\n\n")
-            print(llm_clean)
-            file_licenses = extract_file_licenses_from_llm(llm_clean)
-            compatibility = check_compatibility(main_license, file_licenses)
 
-            print("\n\n")
-            print(compatibility)
+            main_license, path = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
+
+            llm_clean = filter_with_llm(scan_raw, main_license, path)
+
+            file_licenses = extract_file_licenses_from_llm(llm_clean)
+
+            compatibility = check_compatibility(main_license, file_licenses)
             
             # Aggiorniamo la lista di issues con i nuovi risultati
             # check_compatibility ritorna un dict con "issues": [dict, dict...]

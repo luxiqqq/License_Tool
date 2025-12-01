@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Remove debug print statements from analysis_workflow and update workspace.xml">
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Refactor scancode_service imports to streamline dependencies">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/llm_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/llm_helper.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -272,7 +274,7 @@
       <workItem from="1764502022691" duration="720000" />
       <workItem from="1764502783634" duration="161000" />
       <workItem from="1764502965956" duration="1353000" />
-      <workItem from="1764577561602" duration="4642000" />
+      <workItem from="1764577561602" duration="6431000" />
     </task>
     <task id="LOCAL-00001" summary="Add license compatibility checker with analysis and reporting features">
       <option name="closed" value="true" />
@@ -490,7 +492,23 @@
       <option name="project" value="LOCAL" />
       <updated>1764582434435</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="feat: Update scancode_service imports and modify workspace.xml for task tracking">
+      <option name="closed" value="true" />
+      <created>1764584442342</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1764584442342</updated>
+    </task>
+    <task id="LOCAL-00029" summary="feat: Refactor scancode_service imports to streamline dependencies">
+      <option name="closed" value="true" />
+      <created>1764584466382</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1764584466382</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -514,8 +532,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Enhance ScanCode processing with LLM-based license filtering and JSON cleanup" />
-    <MESSAGE value="Refactor license extraction to utilize LLM filtering and improve JSON handling" />
     <MESSAGE value="Enhance LLM filtering by removing main license references from ScanCode JSON" />
     <MESSAGE value="Clear GITHUB_TOKEN in .env for security reasons" />
     <MESSAGE value="Update GITHUB_TOKEN in .env for access configuration" />
@@ -539,7 +555,9 @@
     <MESSAGE value="feat: Enhance __init__.py with additional exports and documentation, set Project Structure" />
     <MESSAGE value="feat: Update llm_helper and scancode_service imports, enhance documentation" />
     <MESSAGE value="feat: Remove debug print statements from analysis_workflow and update workspace.xml" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Remove debug print statements from analysis_workflow and update workspace.xml" />
+    <MESSAGE value="feat: Update scancode_service imports and modify workspace.xml for task tracking" />
+    <MESSAGE value="feat: Refactor scancode_service imports to streamline dependencies" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Refactor scancode_service imports to streamline dependencies" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

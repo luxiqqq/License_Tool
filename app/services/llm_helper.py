@@ -105,7 +105,9 @@ def _call_ollama_gpt(prompt: json) -> str:
     resp = requests.post(OLLAMA_URL, json=payload, timeout=240)
     resp.raise_for_status()
     data = resp.json()
-    return data.get("response", "")
+    response = data.get("response", "")
+    data_clean = response.replace("```json", "").replace("```", "")
+    return data_clean
 
 # Arricchisce la lista di issue con suggerimenti generici e codice rigenerato (se fornito).
 def enrich_with_llm_suggestions(issues: List[Dict], regenerated_map: Dict[str, str] = None) -> List[Dict]:
