@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Refactor scancode_service imports to streamline dependencies">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Update .env configuration and enhance LLM response handling in analysis_workflow">
+      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/llm_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/llm_helper.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -274,7 +273,7 @@
       <workItem from="1764502022691" duration="720000" />
       <workItem from="1764502783634" duration="161000" />
       <workItem from="1764502965956" duration="1353000" />
-      <workItem from="1764577561602" duration="6431000" />
+      <workItem from="1764577561602" duration="8267000" />
     </task>
     <task id="LOCAL-00001" summary="Add license compatibility checker with analysis and reporting features">
       <option name="closed" value="true" />
@@ -508,7 +507,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764584466382</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="feat: Update .env configuration and enhance LLM response handling in analysis_workflow">
+      <option name="closed" value="true" />
+      <created>1764586337814</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1764586337814</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -532,7 +539,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Enhance LLM filtering by removing main license references from ScanCode JSON" />
     <MESSAGE value="Clear GITHUB_TOKEN in .env for security reasons" />
     <MESSAGE value="Update GITHUB_TOKEN in .env for access configuration" />
     <MESSAGE value="Clarify comment in scancode_service.py regarding license matching logic" />
@@ -557,7 +563,8 @@
     <MESSAGE value="feat: Remove debug print statements from analysis_workflow and update workspace.xml" />
     <MESSAGE value="feat: Update scancode_service imports and modify workspace.xml for task tracking" />
     <MESSAGE value="feat: Refactor scancode_service imports to streamline dependencies" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Refactor scancode_service imports to streamline dependencies" />
+    <MESSAGE value="feat: Update .env configuration and enhance LLM response handling in analysis_workflow" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Update .env configuration and enhance LLM response handling in analysis_workflow" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
