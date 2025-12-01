@@ -1,5 +1,3 @@
----
-
 ## ⚖️ Licenza e Conformità Legale
 
 Questa sezione fornisce chiarezza sulle licenze che governano questo strumento e i suoi componenti.
@@ -30,8 +28,6 @@ L'uso dei set di dati di ScanCode richiede la seguente attribuzione preferita:
 Questo strumento interagisce con servizi esterni e scarica codice che ha licenze proprie.
 
 ### Dipendenze Esterne e Servizi
-
-## 🛠️ Dipendenze Esterne e Servizi
 
 Questo tool si basa sui seguenti servizi esterni, il cui utilizzo è regolato dai rispettivi termini e condizioni:
 
