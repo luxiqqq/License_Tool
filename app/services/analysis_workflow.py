@@ -86,9 +86,6 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     """
     # Ricostruiamo il path (assumendo che la repo sia lì)
     repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
-    print("\n\n")
-    print(repo_path)
-    print("\n\n")
     
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la scansione iniziale.")
