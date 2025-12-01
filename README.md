@@ -14,15 +14,14 @@ Vedi il file [LICENSE](LICENSE) per il testo completo.
 
 Questo strumento utilizza il **ScanCode Toolkit** per l'analisi delle licenze. ScanCode è soggetto alle seguenti licenze:
 
-* [cite_start]**Software ScanCode:** Apache License 2.0[cite: 2, 3].
-* [cite_start]**Dati ScanCode (e.g., set per il rilevamento delle licenze):** CC-BY-4.0 (Creative Commons Attribuzione 4.0 Internazionale)[cite: 3, 7].
+* **Software ScanCode:** Apache License 2.0.
+* **Dati ScanCode (e.g., set per il rilevamento delle licenze):** CC-BY-4.0 (Creative Commons Attribuzione 4.0 Internazionale).
 
-[cite_start]**Obbligo di Avviso:** Come richiesto dalla Licenza Apache 2.0, tutti gli avvisi di copyright e le licenze dei componenti di terze parti di ScanCode sono documentati tramite i file `.ABOUT` [cite: 5] e sono inclusi e distribuiti nel file **[THIRD-PARTY-NOTICE.txt](THIRD-PARTY-NOTICE.txt)**, il quale riproduce il contenuto del file `NOTICE` di ScanCode.
+**Obbligo di Avviso:** Come richiesto dalla Licenza Apache 2.0, tutti gli avvisi di copyright e le licenze dei componenti di terze parti di ScanCode sono documentati tramite i file `.ABOUT` e sono inclusi e distribuiti nel file **[THIRD-PARTY-NOTICE.txt](THIRD-PARTY-NOTICE.txt)**, il quale riproduce il contenuto del file `NOTICE` di ScanCode.
 
 **Attribuzione Dati ScanCode (CC-BY-4.0):**
-[cite_start]L'uso dei set di dati di ScanCode richiede la seguente attribuzione preferita[cite: 7]:
-
-> [cite_start]Copyright (c) nexB Inc. e altri[cite: 7]. [cite_start]Tutti i diritti riservati[cite: 7]. [cite_start]ScanCode è un marchio di nexB Inc.[cite: 8]. [cite_start]SPDX-License-Identifier: CC-BY-4.0[cite: 8]. [cite_start]Vedi https://creativecommons.org/licenses/by/4.0/legalcode per il testo della licenza[cite: 8]. [cite_start]Vedi https://github.com/nexB/scancode-toolkit per supporto o download[cite: 9].
+L'uso dei set di dati di ScanCode richiede la seguente attribuzione preferita:
+> Copyright (c) nexB Inc. e altri[cite: 7]. [cite_start]Tutti i diritti riservati. ScanCode è un marchio di nexB Inc. SPDX-License-Identifier: CC-BY-4.0. Vedi https://creativecommons.org/licenses/by/4.0/legalcode per il testo della licenza. Vedi https://github.com/nexB/scancode-toolkit per supporto o download.
 
 ---
 
