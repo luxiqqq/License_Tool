@@ -21,7 +21,7 @@ Questo strumento utilizza il **ScanCode Toolkit** per l'analisi delle licenze. S
 
 **Attribuzione Dati ScanCode (CC-BY-4.0):**
 L'uso dei set di dati di ScanCode richiede la seguente attribuzione preferita:
-> Copyright (c) nexB Inc. e altri[cite: 7]. [cite_start]Tutti i diritti riservati. ScanCode è un marchio di nexB Inc. SPDX-License-Identifier: CC-BY-4.0. Vedi https://creativecommons.org/licenses/by/4.0/legalcode per il testo della licenza. Vedi https://github.com/nexB/scancode-toolkit per supporto o download.
+> Copyright (c) nexB Inc. e altri. Tutti i diritti riservati. ScanCode è un marchio di nexB Inc. SPDX-License-Identifier: CC-BY-4.0. Vedi https://creativecommons.org/licenses/by/4.0/legalcode per il testo della licenza. Vedi https://github.com/nexB/scancode-toolkit per supporto o download.
 
 ---
 
@@ -31,10 +31,15 @@ Questo strumento interagisce con servizi esterni e scarica codice che ha licenze
 
 ### Dipendenze Esterne e Servizi
 
+## 🛠️ Dipendenze Esterne e Servizi
+
+Questo tool si basa sui seguenti servizi esterni, il cui utilizzo è regolato dai rispettivi termini e condizioni:
+
 * **GitHub API e Accesso al Repository:**
     * Il tool scarica repository (codice e metadati) tramite l'API di GitHub.
     * L'uso di questa funzionalità è soggetto ai **Termini di Servizio e ai Termini d'uso delle API di GitHub**.
     * **Attenzione:** Si prega di rispettare rigorosamente i limiti di frequenza (rate limits) di GitHub.
+
 * **Ollama API:**
     * Il tool interagisce con un'istanza Ollama. L'uso di Ollama è soggetto alla sua licenza (MIT).
 
