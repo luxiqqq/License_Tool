@@ -4,8 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Update README.md and add THRID_PART_NOTICE for licensing information">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Refactor README.md and workspace.xml for improved licensing clarity">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pytest.ini" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/api/test_endpoints.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/conftest.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/services/test_github.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/unit/test_checker.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/unit/test_spdx.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_regeneration_manual.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,49 +75,52 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Lucia2&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/gius03/Progetti/License Checker/app/api&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15906128&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.github.copilot.settings.customization.CustomizationConfigurable&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests in test_regeneration_manual.py.executor": "Coverage",
+    "Python tests.pytest in tests.executor": "Coverage",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "Lucia2",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/gius03/Progetti/License Checker/app/api",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15906128",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
-      &quot;directory&quot;,
-      &quot;module&quot;,
-      &quot;repository&quot;
+  "keyToStringList": {
+    "GitStage.ChangesTree.GroupingKeys": [
+      "directory",
+      "module",
+      "repository"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/api" />
       <recent name="$PROJECT_DIR$/app/models" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\lucia.LUCIA\Documents\MAGISTRALE\1 ANNO\1 Semestre\Ingegneria del software\License_Tool\tests\unit" />
+      <recent name="C:\Users\lucia.LUCIA\Documents\MAGISTRALE\1 ANNO\1 Semestre\Ingegneria del software\License_Tool\tests" />
       <recent name="$PROJECT_DIR$/app/services/compatibility" />
       <recent name="$PROJECT_DIR$/app/services" />
       <recent name="$PROJECT_DIR$/app" />
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunManager">
@@ -224,6 +235,38 @@
       <option name="USE_PATTERN" value="false" />
       <method v="2" />
     </configuration>
+    <configuration name="pytest in tests" type="tests" factoryName="py.test" nameIsGenerated="true">
+      <module name="License_Tool" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONPATH" value="C:\Users\lucia.LUCIA\Documents\MAGISTRALE\1 ANNO\1 Semestre\Ingegneria del software\License_Tool" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\lucia.LUCIA\Documents\MAGISTRALE\1 ANNO\1 Semestre\Ingegneria del software\License_Tool" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <EXTENSION ID="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </EXTENSION>
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;--cov\u003dapp --cov-report\u003dhtml&quot;" />
+      <option name="_new_target" value="&quot;C:\\Users\\lucia.LUCIA\\Documents\\MAGISTRALE\\1 ANNO\\1 Semestre\\Ingegneria del software\\License_Tool\\tests&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -272,7 +315,11 @@
       <workItem from="1764502022691" duration="720000" />
       <workItem from="1764502783634" duration="161000" />
       <workItem from="1764502965956" duration="1353000" />
-      <workItem from="1764577561602" duration="9984000" />
+      <workItem from="1764577561602" duration="10303000" />
+      <workItem from="1764590006624" duration="1036000" />
+      <workItem from="1764663946979" duration="67000" />
+      <workItem from="1764690069673" duration="728000" />
+      <workItem from="1764692650268" duration="3944000" />
     </task>
     <task id="LOCAL-00001" summary="Add license compatibility checker with analysis and reporting features">
       <option name="closed" value="true" />
@@ -538,7 +585,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764589321818</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="feat: Refactor README.md and workspace.xml for improved licensing clarity">
+      <option name="closed" value="true" />
+      <created>1764589724207</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1764589724207</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -562,7 +617,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Implement extended OSADL license compatibility matrix and enhance SPDX expression parsing" />
     <MESSAGE value="Refactor compatibility matrix loading to use professional matrix and improve SPDX expression handling" />
     <MESSAGE value="Enhance license matching logic in scancode_service.py to include license_spdx validation and improve filtering criteria" />
     <MESSAGE value="Add comments to scancode_service.py for improved code clarity and organization" />
@@ -587,7 +641,8 @@
     <MESSAGE value="feat: Add LICENSE and THIRD_PART_NOTICE files for licensing information" />
     <MESSAGE value="feat: Update workspace.xml for licensing information and task tracking" />
     <MESSAGE value="feat: Update README.md and add THRID_PART_NOTICE for licensing information" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Update README.md and add THRID_PART_NOTICE for licensing information" />
+    <MESSAGE value="feat: Refactor README.md and workspace.xml for improved licensing clarity" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Refactor README.md and workspace.xml for improved licensing clarity" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -603,6 +658,10 @@
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
     <select />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/License_Tool$pytest_in_tests.coverage" NAME="pytest in tests Coverage Results" MODIFIED="1764696345710" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\lucia.LUCIA\Documents\MAGISTRALE\1 ANNO\1 Semestre\Ingegneria del software\License_Tool" />
+    <SUITE FILE_PATH="coverage/License_Tool$.coverage" NAME=" Coverage Results" MODIFIED="1764692830995" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
