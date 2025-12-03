@@ -1,10 +1,19 @@
+"""
+checker.py - Unit tests per la funzione `check_compatibility` nel modulo
+`app.services.compatibility.checker`.
+"""
+
 #TESTA checker.py
-# python
-import pytest
 from unittest.mock import MagicMock
 from app.services.compatibility.checker import check_compatibility
 
+"""
+    Se la licenza principale normalizzata risulta vuota, la funzione deve
+    indicare che la licenza principale non è stata rilevata e produrre un
+    issue per ogni file analizzato (compatibile=False).
 
+    Usa `monkeypatch` per forzare `normalize_symbol` a ritornare stringa vuota.
+    """
 def test_main_license_invalid_returns_issues(monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "")
     res = check_compatibility("", {"a.py": "MIT"})
@@ -15,7 +24,12 @@ def test_main_license_invalid_returns_issues(monkeypatch):
     assert issue["compatible"] is False
     assert "Licenza principale non rilevata" in issue["reason"]
 
+"""
+    Quando la matrice non è disponibile, la funzione deve segnalare la
+    mancanza della matrice professionale e restituire un issue descrittivo.
 
+    Mocka `get_matrix` per ritornare None.
+"""
 def test_matrix_missing_or_license_not_in_matrix(monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: None)
@@ -24,7 +38,13 @@ def test_matrix_missing_or_license_not_in_matrix(monkeypatch):
     assert len(res["issues"]) == 1
     assert "Matrice professionale non disponibile" in res["issues"][0]["reason"]
 
+"""
+    Se `eval_node` ritorna ('yes', trace), l'issue generato deve essere
+    marcato come compatibile e contenere la traccia nella reason.
 
+    Usa la fixture `complex_matrix_data` come matrice e monkeypatch per isolare
+    le chiamate interne.
+"""
 def test_eval_yes_marks_compatible_and_includes_trace(complex_matrix_data, monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
@@ -38,7 +58,10 @@ def test_eval_yes_marks_compatible_and_includes_trace(complex_matrix_data, monke
     assert issue["compatible"] is True
     assert "direct match" in issue["reason"]
 
-
+"""
+    Se `eval_node` ritorna ('no', trace), l'issue deve essere marcato come
+    non compatibile e includere la traccia nella reason.
+"""
 def test_eval_no_marks_incompatible_and_includes_trace(complex_matrix_data, monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "GPL-3.0")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
@@ -49,7 +72,10 @@ def test_eval_no_marks_incompatible_and_includes_trace(complex_matrix_data, monk
     assert issue["compatible"] is False
     assert "conflict detected" in issue["reason"]
 
-
+"""
+    Se `eval_node` ritorna ('conditional', trace), il reason deve contenere
+    l'esito e la traccia; l'issue deve essere marcato non compatibile.
+"""
 def test_eval_conditional_returns_hint_in_reason_and_not_compatible(complex_matrix_data, monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
@@ -64,12 +90,15 @@ def test_eval_conditional_returns_hint_in_reason_and_not_compatible(complex_matr
     assert "Esito: conditional" in issue["reason"]
     assert "some clause" in issue["reason"]
 
+"""
+    Verifica che, quando `eval_node` ritorna 'yes' per tutti i file,
+    gli issue prodotti esistano ma siano tutti marcati come compatibili.
+
+    Nota: la funzione corrente registra un entry per ogni file anche quando
+    compatibile; il test verifica questo comportamento e l'indicazione di
+    compatibilità.
+"""
 def test_all_files_compatible_returns_no_issues(complex_matrix_data, monkeypatch):
-    """
-    Aggiornamento del test: la funzione attuale registra un issue per ogni file,
-    anche quando è compatibile. Verifichiamo che gli issue esistano ma siano tutti
-    marcati come compatibili.
-    """
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
     monkeypatch.setattr("app.services.compatibility.checker.parse_spdx", lambda s: s.strip())
@@ -81,6 +110,10 @@ def test_all_files_compatible_returns_no_issues(complex_matrix_data, monkeypatch
     assert len(res["issues"]) == 2
     assert all(issue["compatible"] is True for issue in res["issues"])
 
+"""
+    Quando la matrice è presente ma non contiene la main license, la
+    funzione deve comunque restituire un issue che segnala l'anomalia.
+"""
 def test_matrix_present_but_main_not_in_matrix(monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: {"GPL-3.0": {"MIT": "no"}})
@@ -89,6 +122,11 @@ def test_matrix_present_but_main_not_in_matrix(monkeypatch):
     assert len(res["issues"]) == 1
     assert "licenza principale non presente" in res["issues"][0]["reason"].lower() or "Matrice professionale non disponibile" in res["issues"][0]["reason"]
 
+"""
+    Se `eval_node` restituisce uno status non previsto (es. 'weird'),
+    la funzione deve marcare l'issue non compatibile e includere l'etichetta
+    dello status nel reason.
+"""
 def test_eval_unknown_status_shows_unknown_hint(complex_matrix_data, monkeypatch):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
@@ -99,6 +137,10 @@ def test_eval_unknown_status_shows_unknown_hint(complex_matrix_data, monkeypatch
     assert issue["compatible"] is False
     assert "Esito: unknown" in issue["reason"]
 
+"""
+    Quando la licenza rilevata è None, la funzione deve chiamare `parse_spdx`
+    con stringa vuota e propagare il risultato (qui mockato) nell'issue.
+"""
 def test_empty_detected_license_calls_parse_with_empty(monkeypatch, complex_matrix_data):
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s: "MIT")
     monkeypatch.setattr("app.services.compatibility.checker.get_matrix", lambda: complex_matrix_data)
@@ -111,6 +153,10 @@ def test_empty_detected_license_calls_parse_with_empty(monkeypatch, complex_matr
     assert issue["detected_license"] == ""
     assert "no trace" in issue["reason"]
 
+"""
+    Valori speciali o non informativi della main license (UNKNOWN, NOASSERTION,
+    NONE) devono essere trattati come mancanza di licenza principale.
+"""
 def test_main_license_special_values_treated_as_invalid(monkeypatch):
     for val in ("UNKNOWN", "NOASSERTION", "NONE"):
         monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", lambda s, v=val: v)
