@@ -4,17 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Add comprehensive unit tests for check_compatibility function with detailed scenarios">
-      <change afterPath="$PROJECT_DIR$/tests/unit/test_evaluator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/unit/test_parser_spdx.py" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="feat: Add unit tests for compatibility matrix loading and status normalization (da Antonella)">
+      <change afterPath="$PROJECT_DIR$/tests/unit/test_compat_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Callback.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Callback.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/conftest.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/unit/test_checker.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/test_checker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/unit/test_spdx.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/unit/test_evaluator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/test_evaluator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/unit/test_parser_spdx.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/test_parser_spdx.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -323,7 +319,7 @@
       <workItem from="1764692650268" duration="4364000" />
       <workItem from="1764697305930" duration="2923000" />
       <workItem from="1764772307149" duration="2935000" />
-      <workItem from="1764775749551" duration="6624000" />
+      <workItem from="1764775749551" duration="8789000" />
     </task>
     <task id="LOCAL-00001" summary="Add license compatibility checker with analysis and reporting features">
       <option name="closed" value="true" />
@@ -645,7 +641,23 @@
       <option name="project" value="LOCAL" />
       <updated>1764780275036</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="feat: Update styles and enhance compatibility evaluation tests with additional scenarios">
+      <option name="closed" value="true" />
+      <created>1764782471446</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1764782471446</updated>
+    </task>
+    <task id="LOCAL-00042" summary="feat: Add unit tests for compatibility matrix loading and status normalization (da Antonella)">
+      <option name="closed" value="true" />
+      <created>1764782756384</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1764782756384</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -669,8 +681,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Implement OAuth authentication flow for GitHub in analysis API and refactor repository cloning logic" />
-    <MESSAGE value="chore: Update environment configuration for Windows paths and add VCS settings" />
     <MESSAGE value="chore: Update environment configuration for Windows paths and enhance repository cloning logic" />
     <MESSAGE value="refactor: Remove debug JSON output from scancode_service and update workspace configuration" />
     <MESSAGE value="feat: Add Ollama host configuration and ensure Ollama service readiness in llm_helper" />
@@ -694,7 +704,9 @@
     <MESSAGE value="feat: Refactor authentication handling to use environment variables and add MongoDB integration for GitHub credentials" />
     <MESSAGE value="feat: Enhance compatibility checker tests with additional scenarios and edge cases" />
     <MESSAGE value="feat: Add comprehensive unit tests for check_compatibility function with detailed scenarios" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Add comprehensive unit tests for check_compatibility function with detailed scenarios" />
+    <MESSAGE value="feat: Update styles and enhance compatibility evaluation tests with additional scenarios" />
+    <MESSAGE value="feat: Add unit tests for compatibility matrix loading and status normalization (da Antonella)" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Add unit tests for compatibility matrix loading and status normalization (da Antonella)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
