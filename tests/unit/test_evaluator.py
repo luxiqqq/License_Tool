@@ -1,3 +1,4 @@
+# python
 """
 Module: tests/test_evaluator.py
 
@@ -23,63 +24,6 @@ They are required because `evaluator.py` performs `isinstance()` checks that mus
 during testing without importing the actual logic from `parser_spdx`.
 """
 
-class MockNode:
-    """
-    Base class for mocking SPDX parser nodes.
-    """
-    pass
-
-class MockLeaf(MockNode):
-    """
-    Mocks a leaf node representing a single license identifier (e.g., 'MIT').
-    """
-    def __init__(self, value):
-        self.value = value
-
-class MockAnd(MockNode):
-    """
-    Mocks a boolean AND operator node (e.g., 'MIT AND Apache-2.0').
-    """
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-class MockOr(MockNode):
-    """
-    Mocks a boolean OR operator node (e.g., 'GPL-3.0 OR MIT').
-    """
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-"""
-The following methods are used to mock configuration.
-"""
-
-@pytest.fixture(autouse=True)
-def setup_mocks(complex_matrix_data):
-    """
-    Automatically applies mocks before each test execution.
-
-    It replaces:
-    - `get_matrix`: To return the controlled dataset `complex_matrix_data` from `conftest.py`.
-    - `normalize_symbol`: To perform a simple strip, bypassing complex normalization logic.
-    - `Leaf`, `And`, `Or`: With the local Mock classes defined above.
-
-    Args:
-        complex_matrix_data (dict): The shared fixture containing compatibility rules.
-    """
-    with patch("app.services.compatibility.evaluator.get_matrix", return_value=complex_matrix_data), \
-         patch("app.services.compatibility.evaluator.normalize_symbol", side_effect=lambda x: x.strip()), \
-         patch("app.services.compatibility.evaluator.Leaf", MockLeaf), \
-         patch("app.services.compatibility.evaluator.And", MockAnd), \
-         patch("app.services.compatibility.evaluator.Or", MockOr):
-        yield
-
-"""
-The following methods perform unit tests.
-"""
-
 def test_lookup_status_found():
     """
     Verifies that the internal `_lookup_status` function correctly retrieves
@@ -97,16 +41,18 @@ def test_lookup_status_unknown():
     assert evaluator._lookup_status("MIT", "Unknown-License") == "unknown"
     assert evaluator._lookup_status("NonExistentMain", "MIT") == "unknown"
 
-def test_eval_node_none():
+def test_eval_node_none(_msg_matches):
     """
     Ensures that passing `None` as a node results in an 'unknown' status
     and an appropriate error message in the trace.
     """
     status, trace = evaluator.eval_node("MIT", None)
     assert status == "unknown"
-    assert "Expression missed" in trace[0]
+    assert _msg_matches(trace[0],
+                        "Expression missed",
+                        "Espressione mancante o non riconosciuta")
 
-def test_eval_leaf_simple():
+def test_eval_leaf_simple(_msg_matches, MockLeaf):
     """
     Tests the evaluation of a simple Leaf node (single license).
     Scenario: Checking 'Apache-2.0' against 'MIT'.
@@ -116,9 +62,11 @@ def test_eval_leaf_simple():
 
     status, trace = evaluator.eval_node("MIT", node)
     assert status == "yes"
-    assert "Apache-2.0 → yes for MIT" in trace[0]
+    assert _msg_matches(trace[0],
+                        "Apache-2.0 → yes for MIT",
+                        "Apache-2.0 → yes rispetto a MIT")
 
-def test_eval_leaf_with_exception():
+def test_eval_leaf_with_exception(_msg_matches, MockLeaf):
     """
     Tests the handling of the 'WITH' clause.
     Scenario: 'GPL-3.0 WITH Classpath-exception'.
@@ -134,9 +82,11 @@ def test_eval_leaf_with_exception():
     # Ensure the failure message is NOT present
     assert "exception requires manual verification" not in trace[0]
     # Ensure the success/detection message IS present
-    assert "Exception found" in trace[0]
+    assert _msg_matches(trace[0],
+                        "Exception found",
+                        "Eccezione rilevata")
 
-def test_eval_or_logic_optimistic():
+def test_eval_or_logic_optimistic(MockLeaf, MockOr):
     """
     Tests the 'OR' operator logic.
     Rule: Optimistic evaluation. If at least one branch is compatible, the result is compatible.
@@ -150,7 +100,7 @@ def test_eval_or_logic_optimistic():
     assert "OR ⇒ yes" in trace[-1]
 
 
-def test_eval_and_logic_conservative():
+def test_eval_and_logic_conservative(MockLeaf, MockAnd):
     """
     Tests the 'AND' operator logic.
     Rule: Conservative evaluation. If any branch is incompatible, the result is incompatible.
@@ -163,13 +113,17 @@ def test_eval_and_logic_conservative():
     assert status == "no"
     assert any("AND ⇒ no" in line for line in trace)
 
-def test_and_cross_compatibility_check():
+
+def test_and_cross_compatibility_check(_msg_matches, MockLeaf, MockAnd):
     """
     Verifies that the 'AND' logic performs cross-compatibility checks between operands.
     Scenario: 'Apache-2.0 AND GPL-3.0'.
     Logic: Besides checking against the main license, the system must check if
     Apache-2.0 is compatible with GPL-3.0 and vice-versa.
     """
+    # Use fixtures for mock classes
+    def mk(l, r, MockLeaf=MockLeaf, MockAnd=MockAnd):
+        return MockAnd(MockLeaf(l), MockLeaf(r))
     node = MockAnd(MockLeaf("Apache-2.0"), MockLeaf("GPL-3.0"))
 
     # We are not asserting the final status here, but rather the *process*.
@@ -177,23 +131,37 @@ def test_and_cross_compatibility_check():
     status, trace = evaluator.eval_node("GPL-3.0", node)
 
     trace_str = " ".join(trace)
-    assert "Cross compatibility check: Apache-2.0 with GPL-3.0" in trace_str
-    assert "Cross compatibility check: GPL-3.0 with Apache-2.0" in trace_str
+    assert _msg_matches(trace_str,
+                        "Cross compatibility check: Apache-2.0 with GPL-3.0",
+                        "Compatibilità incrociata: Apache-2.0 rispetto a GPL-3.0")
+    assert _msg_matches(trace_str,
+                        "Cross compatibility check: GPL-3.0 with Apache-2.0",
+                        "Compatibilità incrociata: GPL-3.0 rispetto a Apache-2.0")
 
-def test_combine_helpers():
+@pytest.mark.parametrize("a,b,expected", [
+    ("yes", "yes", "yes"),
+    ("yes", "no", "no"),
+    ("conditional", "yes", "conditional"),
+])
+def test_combine_and_parametrized(a, b, expected):
     """
     Directly tests the helper functions for combining tri-state logic values.
     Verifies the truth tables for AND/OR operations with 'yes', 'no', and 'conditional'.
     """
-    # AND Logic: Conservative
-    assert evaluator._combine_and("yes", "yes") == "yes"
-    assert evaluator._combine_and("yes", "no") == "no"
-    assert evaluator._combine_and("conditional", "yes") == "conditional"
+    assert evaluator._combine_and(a, b) == expected
 
-    # OR Logic: Optimistic
-    assert evaluator._combine_or("yes", "no") == "yes"
-    assert evaluator._combine_or("no", "no") == "no"
-    assert evaluator._combine_or("conditional", "no") == "conditional"
+
+@pytest.mark.parametrize("a,b,expected", [
+    ("yes", "no", "yes"),
+    ("no", "no", "no"),
+    ("conditional", "no", "conditional"),
+])
+def test_combine_or_parametrized(a, b, expected):
+    """
+    Directly tests the helper functions for combining tri-state logic values.
+    Verifies the truth tables for AND/OR operations with 'yes', 'no', and 'conditional'.
+    """
+    assert evaluator._combine_or(a, b) == expected
 
 def test_lookup_status_empty_matrix():
     """
@@ -207,7 +175,7 @@ def test_lookup_status_empty_matrix():
     with patch("app.services.compatibility.evaluator.get_matrix", return_value={}):
         assert evaluator._lookup_status("MIT", "MIT") == "unknown"
 
-def test_eval_leaf_with_exception_fail():
+def test_eval_leaf_with_exception_fail(_msg_matches, MockLeaf):
     """
     Tests a 'WITH' exception clause where the base license is inherently INCOMPATIBLE.
     Scenario: 'Proprietary WITH Some-Exception' against 'GPL-3.0'.
@@ -219,7 +187,9 @@ def test_eval_leaf_with_exception_fail():
     status, trace = evaluator.eval_node("GPL-3.0", node)
 
     assert status == "no"
-    assert "exception requires manual verification" in trace[0]
+    assert _msg_matches(trace[0],
+                        "exception requires manual verification",
+                        "Nota: presenza di eccezione richiede verifica manuale")
 
 def test_combine_conditional_logic():
     """
@@ -235,7 +205,7 @@ def test_combine_conditional_logic():
     assert evaluator._combine_or("no", "conditional") == "conditional"
     assert evaluator._combine_or("conditional", "conditional") == "conditional"
 
-def test_eval_node_unrecognized_type():
+def test_eval_node_unrecognized_type(_msg_matches, MockNode):
     """
     Defensive Coding: Tests the system's reaction to an unknown node type
     (e.g., if the parser is extended but the evaluator is not updated).
@@ -246,9 +216,11 @@ def test_eval_node_unrecognized_type():
 
     status, trace = evaluator.eval_node("MIT", UnknownNode())
     assert status == "unknown"
-    assert "Node not recognized" in trace[0]
+    assert _msg_matches(trace[0],
+                        "Node not recognized",
+                        "Nodo non riconosciuto")
 
-def test_and_nested_leaves_collection():
+def test_and_nested_leaves_collection(_msg_matches, MockLeaf, MockOr, MockAnd):
     """
     Advanced Test: Verifies the recursive collection of leaves for cross-checks
     in nested structures.
@@ -266,5 +238,35 @@ def test_and_nested_leaves_collection():
     trace_str = " ".join(trace)
 
     # Verify that cross-checks were performed for ALL nested leaves
-    assert "Cross compatibility check: MIT with GPL-3.0" in trace_str
-    assert "Cross compatibility check: Apache-2.0 with GPL-3.0" in trace_str
+    assert _msg_matches(trace_str,
+                        "Cross compatibility check: MIT with GPL-3.0",
+                        "Compatibilità incrociata: MIT rispetto a GPL-3.0")
+    assert _msg_matches(trace_str,
+                        "Cross compatibility check: Apache-2.0 with GPL-3.0",
+                        "Compatibilità incrociata: Apache-2.0 rispetto a GPL-3.0")
+
+@pytest.mark.parametrize("main,left,right,expected", [
+    ("MIT", "Apache-2.0", "GPL-3.0", "no"),          # yes AND no -> no
+    ("MIT", "Apache-2.0", "MIT", "yes"),             # yes AND yes -> yes
+    ("MIT", "LGPL-2.1", "MIT", "conditional"),       # conditional AND yes -> conditional
+    ("GPL-3.0", "Apache-2.0", "Apache-2.0", "no"),   # no AND no -> no
+])
+def test_eval_and_parametrized(MockAnd, MockLeaf, main, left, right, expected):
+    node = MockAnd(MockLeaf(left), MockLeaf(right))
+    status, trace = evaluator.eval_node(main, node)
+    assert status == expected
+    assert any(f"AND ⇒ {expected}" in line for line in trace)
+
+
+@pytest.mark.parametrize("main,left,right,expected", [
+    ("MIT", "Apache-2.0", "GPL-3.0", "yes"),          # yes OR no -> yes
+    ("MIT", "GPL-3.0", "GPL-3.0", "no"),             # no OR no -> no
+    ("MIT", "LGPL-2.1", "GPL-3.0", "conditional"),   # conditional OR no -> conditional
+    ("GPL-3.0", "MIT", "Apache-2.0", "yes"),        # yes OR no -> yes (different main)
+])
+def test_eval_or_parametrized(MockOr, MockLeaf, main, left, right, expected):
+    node = MockOr(MockLeaf(left), MockLeaf(right))
+    status, trace = evaluator.eval_node(main, node)
+    assert status == expected
+    assert any(f"OR ⇒ {expected}" in line for line in trace)
+
