@@ -1,4 +1,9 @@
 # Questo file contiene la TUA logica di business pura, senza FastAPI
+import shutil
+import zipfile
+from pathlib import Path
+
+from fastapi import UploadFile, HTTPException
 from app.models.schemas import AnalyzeResponse, LicenseIssue
 from app.services.github_client import clone_repo
 from app.services.scancode_service import (
@@ -21,9 +26,50 @@ def perform_cloning(owner: str, repo: str, oauth_token: str) -> str:
     clone_result = clone_repo(owner, repo, oauth_token)
     if not clone_result.success:
         raise ValueError(f"Errore clonazione: {clone_result.error}")
-    
+
     return clone_result.repo_path
 
+def perform_upload_zip(owner: str, repo: str, uploaded_file: UploadFile) -> str:
+    """
+    Gestisce l'upload di uno zip, pulisce la directory target e estrae i file.
+    Utilizza CLONE_BASE_DIR e la nomenclatura {owner}_{repo} per compatibilità
+    con perform_initial_scan.
+    """
+    # Costruiamo il path nello stesso modo in cui lo si aspetta la scansione successiva
+    target_dir = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
+
+    # Pulisci la directory se esiste già (per evitare mix di file vecchi e nuovi)
+    if os.path.exists(target_dir):
+        try:
+            shutil.rmtree(target_dir)
+        except OSError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Errore durante la pulizia della directory esistente: {e}"
+            )
+
+    # Crea la directory pulita
+    os.makedirs(target_dir, exist_ok=True)
+
+    # Validazione base dell'estensione
+    if not uploaded_file.filename.endswith('.zip'):
+        raise HTTPException(status_code=400, detail="Il file caricato deve essere un archivio .zip")
+
+    # Estrazione del file
+    try:
+        # Usa uploaded_file.file (oggetto spooled) direttamente
+        with zipfile.ZipFile(uploaded_file.file, 'r') as zip_ref:
+            # Estrazione sicura (nota: in produzione considerare controlli su path traversal 'Zip Slip')
+            zip_ref.extractall(target_dir)
+
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Il file fornito è un file zip corrotto o non valido.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore durante l'estrazione: {str(e)}")
+    finally:
+        uploaded_file.file.close()
+
+    return os.path.abspath(target_dir)
 
 def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     """
@@ -31,13 +77,13 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     """
     # Ricostruiamo il path (assumendo che la repo sia lì)
     repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
-    
+
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la clonazione.")
 
     # 2) Esegui ScanCode
     scan_raw = run_scancode(repo_path)
-    
+
 
     # 3) Main License
     main_license, path_license = detect_main_license_scancode(scan_raw)
@@ -49,7 +95,7 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
 
     # 5) Compatibilità (Prima Passata)
     compatibility = check_compatibility(main_license, file_licenses)
-   
+
 
     # 6) Suggerimenti AI (senza rigenerazione per ora)
     # Passiamo una mappa vuota perché non abbiamo ancora rigenerato nulla
@@ -79,7 +125,6 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
         report_path=report_path,
     )
 
-
 def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeResponse) -> AnalyzeResponse:
     """
     Esegue la logica di rigenerazione su una repo GIÀ clonata.
@@ -87,7 +132,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     """
     # Ricostruiamo il path (assumendo che la repo sia lì)
     repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
-    
+
     if not os.path.exists(repo_path):
         raise ValueError(f"Repository non trovata in {repo_path}. Esegui prima la scansione iniziale.")
 
@@ -96,7 +141,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     # previous_analysis.issues è una lista di oggetti LicenseIssue (Pydantic)
     # La logica sotto si aspetta spesso dei dict o oggetti accessibili.
     # Se 'issues' sono oggetti Pydantic, possiamo accedervi con .attribute
-    
+
     # --- LOGICA DI RIGENERAZIONE ---
     regenerated_files_map = {}  # file_path -> new_code_content
     files_to_regenerate = []
@@ -115,19 +160,19 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
 
         for issue in files_to_regenerate:
             fpath = issue.file_path
-            
+
             # Tentativo di correzione path
             repo_name = os.path.basename(os.path.normpath(repo_path))
             if fpath.startswith(f"{repo_name}/"):
                 abs_path = os.path.join(os.path.dirname(repo_path), fpath)
             else:
                 abs_path = os.path.join(repo_path, fpath)
-            
+
             if os.path.exists(abs_path):
                 try:
                     with open(abs_path, "r", encoding="utf-8", errors="ignore") as f:
                         original_content = f.read()
-                    
+
                     # Chiamata LLM
                     new_code = regenerate_code(
                         code_content=original_content,
@@ -139,7 +184,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
                         # Sovrascrittura file
                         with open(abs_path, "w", encoding="utf-8") as f:
                             f.write(new_code)
-                        
+
                         regenerated_files_map[fpath] = new_code
                         print(f"Rigenerato: {fpath} (Length: {len(new_code)})")
                     else:
@@ -159,7 +204,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
             file_licenses = extract_file_licenses_from_llm(llm_clean)
 
             compatibility = check_compatibility(main_license, file_licenses)
-            
+
             # Aggiorniamo la lista di issues con i nuovi risultati
             # check_compatibility ritorna un dict con "issues": [dict, dict...]
             current_issues_dicts = compatibility["issues"]
