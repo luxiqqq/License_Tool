@@ -15,11 +15,22 @@ def run_scancode(repo_path: str) -> dict:
     e ritorna il JSON parsato e pulito.
     """
 
-    # 1. Definizione degli ignore pattern
-    ignore_path = os.path.join(os.path.dirname(__file__), 'license_rules.json')
-    with open(ignore_path, 'r', encoding='utf-8') as f:
-        rules = json.load(f)
-    ignore_patterns = rules.get("ignored_patterns", [])
+    # 1. Definizione degli ignore pattern (legge prima patterns_to_ignore.json)
+    patterns_path = os.path.join(os.path.dirname(__file__), 'patterns_to_ignore.json')
+    rules_path = os.path.join(os.path.dirname(__file__), 'license_rules.json')
+
+    ignore_patterns = []
+    if os.path.exists(patterns_path):
+        with open(patterns_path, 'r', encoding='utf-8') as f:
+            p = json.load(f)
+        ignore_patterns = p.get("ignored_patterns", []) or []
+    elif os.path.exists(rules_path):
+        with open(rules_path, 'r', encoding='utf-8') as f:
+            r = json.load(f)
+        ignore_patterns = r.get("ignored_patterns", []) or []
+
+    # normalizza e rimuove valori falsy
+    ignore_patterns = [str(x) for x in ignore_patterns if x]
 
     # Assicuriamoci che la directory di output esista
     os.makedirs(OUTPUT_BASE_DIR, exist_ok=True)
