@@ -29,11 +29,22 @@ def run_scancode(repo_path: str) -> dict:
               'license_detections' key removed to reduce payload size.
     """
 
-    # 1. Definizione degli ignore pattern
-    ignore_path = os.path.join(os.path.dirname(__file__), 'license_rules.json')
-    with open(ignore_path, 'r', encoding='utf-8') as f:
-        rules = json.load(f)
-    ignore_patterns = rules.get("ignored_patterns", [])
+    # 1. Definizione degli ignore pattern (legge prima patterns_to_ignore.json)
+    patterns_path = os.path.join(os.path.dirname(__file__), 'patterns_to_ignore.json')
+    rules_path = os.path.join(os.path.dirname(__file__), 'license_rules.json')
+
+    ignore_patterns = []
+    if os.path.exists(patterns_path):
+        with open(patterns_path, 'r', encoding='utf-8') as f:
+            p = json.load(f)
+        ignore_patterns = p.get("ignored_patterns", []) or []
+    elif os.path.exists(rules_path):
+        with open(rules_path, 'r', encoding='utf-8') as f:
+            r = json.load(f)
+        ignore_patterns = r.get("ignored_patterns", []) or []
+
+    # normalizza e rimuove valori falsy
+    ignore_patterns = [str(x) for x in ignore_patterns if x]
 
     # Assicuriamoci che la directory di output esista
     os.makedirs(OUTPUT_BASE_DIR, exist_ok=True)
@@ -134,8 +145,9 @@ def filter_with_llm(scancode_data: dict, main_spdx: str, path: str) -> dict:
     else:
         regex_filtered = filter_license_data(scan_clean, detected_main_spdx=False)
 
-    post_regex_cleaning = remove_mainspdx_from_filespdx(regex_filtered, main_spdx)
-    return post_regex_cleaning
+    #post_regex_cleaning = remove_mainspdx_from_filespdx(regex_filtered, main_spdx)
+    #return post_regex_cleaning
+    return regex_filtered
 
 
 def build_minimal_json(scancode_data: dict) -> dict:
@@ -454,6 +466,10 @@ def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
 
     return filtered_files
 
+"""
+NON USATO AL MOMENTO: perchè quando lo usavamo e rigeneravamo  il codice non ci mostrava le licenze che erano state rigenerate solo con la main
+Per capire che intendo prova con psf_requests e poi metti i file: prova3 prova4 e prova5 che abbiamo
+"""
 def remove_mainspdx_from_filespdx(data: dict, main_spdx: str) -> dict:
     # Nota il [:] alla fine: stiamo iterando su una COPIA della lista
     for file_entry in data.get("files", [])[:]:
