@@ -127,8 +127,9 @@ def filter_with_llm(scancode_data: dict, main_spdx: str, path: str) -> dict:
     else:
         regex_filtered = filter_license_data(scan_clean, detected_main_spdx=False)
 
-    post_regex_cleaning = remove_mainspdx_from_filespdx(regex_filtered, main_spdx)
-    return post_regex_cleaning
+    #post_regex_cleaning = remove_mainspdx_from_filespdx(regex_filtered, main_spdx)
+    #return post_regex_cleaning
+    return regex_filtered
 
 def build_minimal_json(scancode_data: dict) -> dict:
     """
@@ -445,6 +446,10 @@ def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
 
     return filtered_files
 
+"""
+NON USATO AL MOMENTO: perchè quando lo usavamo e rigeneravamo  il codice non ci mostrava le licenze che erano state rigenerate solo con la main
+Per capire che intendo prova con psf_requests e poi metti i file: prova3 prova4 e prova5 che abbiamo
+"""
 def remove_mainspdx_from_filespdx(data: dict, main_spdx: str) -> dict:
     # Nota il [:] alla fine: stiamo iterando su una COPIA della lista
     for file_entry in data.get("files", [])[:]:
