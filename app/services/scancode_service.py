@@ -148,10 +148,10 @@ def build_minimal_json(scancode_data: dict) -> dict:
             continue
 
         file_matches = []
-        
+
         # ScanCode file-level detections
         for det in file_entry.get("license_detections", []):
-            
+
             # 'matches' contiene i dettagli (start_line, end_line, matched_text)
             for match in det.get("matches", []):
 
