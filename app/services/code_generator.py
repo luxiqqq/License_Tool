@@ -6,12 +6,10 @@ license compatibility.
 from typing import Optional
 from app.services.llm_helper import _call_ollama  # se vuoi rendere pubblico, spostalo
 
-
 def regenerate_code(
-        code_content: str,
-        main_license: str,
-        detected_license: str,
-        language: str = "python"
+    code_content: str,
+    main_license: str,
+    detected_license: str,
 ) -> Optional[str]:
     """
     Requests the LLM to regenerate a code block under a compatible license.

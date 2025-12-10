@@ -13,6 +13,7 @@ from app.core.config import OLLAMA_URL, OLLAMA_GENERAL_MODEL, OLLAMA_HOST_VERSIO
     OLLAMA_HOST_TAGS, MINIMAL_JSON_BASE_DIR
 
 
+# Controlla se il servizio Ollama risponde entro il timeout indicato.
 def _is_ollama_running(timeout: float = 2.0) -> bool:
     """
     Verifies if Ollama is running by making a GET request to the version endpoint.
@@ -53,6 +54,7 @@ def _start_ollama(wait_seconds: float = 10.0) -> bool:
         time.sleep(0.5)
     return False
 
+# Verifica se un modello specifico è installato su Ollama.
 def _is_model_installed(model_name: str) -> bool:
     """
     Checks if the specified model is installed in Ollama.
@@ -70,6 +72,7 @@ def _is_model_installed(model_name: str) -> bool:
     except Exception:
         return False
 
+# Scarica un modello usando `ollama pull` e attende il completamento.
 def _pull_model(model_name: str, timeout: int = 600) -> None:
     """
     Executes the command to pull the specified model using Ollama CLI.
@@ -81,6 +84,7 @@ def _pull_model(model_name: str, timeout: int = 600) -> None:
     p = subprocess.Popen(["ollama", "pull", model_name])
     p.wait(timeout=timeout)
 
+# Garantisce che Ollama sia in esecuzione e che il modello richiesto sia presente.
 def ensure_ollama_ready(model_name: str, start_if_needed: bool = True, pull_if_needed: bool = True) -> None:
     """
     Ensures that Ollama is running and the specified model is installed.
@@ -122,7 +126,8 @@ def _call_ollama(prompt: str) -> str:
     data = resp.json()
     return data.get("response", "")
 
-def _call_ollama_gpt(prompt: json) -> str:
+# Chiamata sincrona semplice all'API Ollama per uso "general/GPT-like".
+def _call_ollama_gpt(prompt: json ) -> str:
     """
     Local Ollama API call for general GPT tasks.
     Uses a higher timeout for longer responses.
@@ -154,35 +159,28 @@ def _call_ollama_gpt(prompt: json) -> str:
     data_clean = response.replace("```json", "").replace("```", "")
     return data_clean
 
-
-def enrich_with_llm_suggestions(issues: List[Dict], regenerated_map: Dict[str, str] = None) -> List[Dict]:
+def _call_ollama_deepseek(prompt: str) -> str:
     """
-    Enriches license issues with LLM-generated suggestions.
-
-    Args:
-        issues (List[Dict]): A list of license issue dictionaries.
-        regenerated_map (Dict[str, str], optional): A mapping of file paths to regenerated code paths. Defaults to None.
-
-    Returns:
-        List[Dict]: A list of enriched license issue dictionaries.
+    Effettua una chiamata POST a `OLLAMA_URL` usando il modello generale.
+    Maggior timeout per risposte più lunghe.
     """
-    if regenerated_map is None:
-        regenerated_map = {}
+    ensure_ollama_ready(model_name=OLLAMA_GENERAL_MODEL)
+    payload = {
+        "model": OLLAMA_GENERAL_MODEL,
+        "prompt": prompt,
+        "stream": False,
+    }
+    resp = requests.post(OLLAMA_URL, json=payload, timeout=240)
+    resp.raise_for_status()
+    data = resp.json()
 
-    enriched = []
+    # Assicura che la cartella esista e scrive il JSON minimale invece di leggerlo
+    os.makedirs(MINIMAL_JSON_BASE_DIR, exist_ok=True)
+    output_minimal = os.path.join(MINIMAL_JSON_BASE_DIR, "model_output.json")
 
-    for issue in issues:
-        enriched.append({
-            "file_path": issue["file_path"],
-            "detected_license": issue["detected_license"],
-            "compatible": issue["compatible"],
-            "reason": issue["reason"],
-            "suggestion": (
-                f"Check license {issue['detected_license']} in file "
-                f"{issue['file_path']} and verify its compliance with the project license."
-            ),
-            # Optionally include regenerated code path if available
-            "regenerated_code_path": regenerated_map.get(issue["file_path"]),
-        })
+    with open(output_minimal, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
-    return enriched
+    response = data.get("response", "")
+    data_clean = response.replace("```json", "").replace("```", "")
+    return data_clean

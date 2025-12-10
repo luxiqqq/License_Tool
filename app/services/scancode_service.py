@@ -128,7 +128,6 @@ def remove_main_license(main_spdx, path, scancode_data) -> dict:
 
     return scancode_data
 
-
 def filter_with_llm(scancode_data: dict, main_spdx: str, path: str) -> dict:
     """
     Filters ScanCode results using an LLM to remove false positives.
@@ -149,7 +148,6 @@ def filter_with_llm(scancode_data: dict, main_spdx: str, path: str) -> dict:
     #return post_regex_cleaning
     return regex_filtered
 
-
 def build_minimal_json(scancode_data: dict) -> dict:
     """
     Builds a minimal JSON structure from the ScanCode data.
@@ -167,14 +165,15 @@ def build_minimal_json(scancode_data: dict) -> dict:
             continue
 
         file_matches = []
-
+        
         # ScanCode file-level detections
         for det in file_entry.get("license_detections", []):
 
-            # 'matches' contains details (start_line, end_line, matched_text)
+            # 'matches' contiene i dettagli (start_line, end_line, matched_text)
             for match in det.get("matches", []):
 
                 if match.get("from_file") == path:
+
                     file_matches.append({
                         "license_spdx": match.get("license_expression_spdx"),
                         "matched_text": match.get("matched_text"),
@@ -200,7 +199,6 @@ def build_minimal_json(scancode_data: dict) -> dict:
         json.dump(minimal, f, indent=4, ensure_ascii=False)
 
     return minimal
-
 
 def ask_llm_to_filter_licenses(minimal_json: dict) -> dict:
     """
@@ -493,7 +491,6 @@ def _is_valid(value: Optional[str]) -> bool:
     """Verifies if a string is a valid SPDX and not None/empty/UNKNOWN."""
     return bool(value) and value != "UNKNOWN"
 
-
 def _extract_first_valid_spdx(entry: Dict[str, Any]) -> Optional[Tuple[str, str]]:
     """
     Returns the first valid SPDX found in the ScanCode entry,
@@ -527,7 +524,6 @@ def _extract_first_valid_spdx(entry: Dict[str, Any]) -> Optional[Tuple[str, str]
 
     return None
 
-
 def _pick_best_spdx(entries: List[Dict[str, Any]]) -> Optional[Tuple[str, str]]:
     """
     Sorts files closest to root (lower path depth) and
@@ -549,7 +545,6 @@ def _pick_best_spdx(entries: List[Dict[str, Any]]) -> Optional[Tuple[str, str]]:
             return res
 
     return None
-
 
 def detect_main_license_scancode(data: dict) -> Optional[Tuple[str, str]] | str:
     """
