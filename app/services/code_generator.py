@@ -1,35 +1,13 @@
-"""
-This module interacts with the LLM (Ollama) to rewrite source code that violates
-license compatibility.
-"""
-
 from typing import Optional
 from app.services.llm_helper import _call_ollama  # se vuoi rendere pubblico, spostalo
 
-
 def regenerate_code(
-        code_content: str,
-        main_license: str,
-        detected_license: str,
-        language: str = "python"
+    code_content: str,
+    main_license: str,
+    detected_license: str,
 ) -> Optional[str]:
     """
-    Requests the LLM to regenerate a code block under a compatible license.
-
-    The prompt instructs the model to:
-    1. Analyze the original code and its incompatible license.
-    2. Rewrite the logic to be functionally equivalent but compliant with the `main_license`
-       (preferring permissive licenses like MIT/Apache-2.0 if possible).
-    3. Ensure no original restricted code (strong copyleft) is verbatim copied if it violates terms.
-
-    Args:
-        code_content (str): The original source code that violates license compatibility.
-        main_license (str): The primary license of the project (e.g., "MIT", "Apache-2.0").
-        detected_license (str): The license detected in the original code (e.g., "GPL-3.0").
-        language (str): The programming language of the code snippet (default is "python").
-
-    Returns:
-        Optional[str]: The clean, extracted source code string, or None if generation fails.
+    Chiede a Ollama di rigenerare un blocco di codice con licenza compatibile.
     """
     prompt = (
         f"Sei un esperto di licenze software e refactoring. "
@@ -45,16 +23,16 @@ def regenerate_code(
         response = _call_ollama(prompt)
         if not response:
             return None
-
-        # Clean up the response to remove markdown formatting if present
+            
+        # Pulizia Markdown se presente
         clean_response = response.strip()
         if clean_response.startswith("```"):
-            # Remove the first line (```)
+            # Rimuove la prima riga (```python o simile)
             clean_response = clean_response.split("\n", 1)[1]
-            # Removes the last line if it ends with ```
+            # Rimuove l'ultima riga (```)
             if clean_response.endswith("```"):
                 clean_response = clean_response.rsplit("\n", 1)[0]
-
+        
         return clean_response.strip()
     except Exception:
         return None
