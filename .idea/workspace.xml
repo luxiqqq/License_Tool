@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="fix: update workspace configuration for improved XML formatting and readability">
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.css" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="test: Refactor and enhance test suite for authentication and analysis endpoints">
+      <change afterPath="$PROJECT_DIR$/tests/api/test_regenerate_download_integration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/api/test_analysis_integrations.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/api/test_analysis_integrations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/api/test_regenerate_download.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +45,7 @@
     </excluded-from-favorite>
     <option name="PREVIOUS_COMMIT_AUTHORS">
       <list>
+        <option value="aantok1 &lt;a.capone10@studenti.unisannio.it&gt;" />
         <option value="medugnov &lt;vittoria.medugno@gmail.com&gt;" />
       </list>
     </option>
@@ -348,30 +352,6 @@
       <workItem from="1764862826287" duration="3709000" />
       <workItem from="1764868401224" duration="5290000" />
       <workItem from="1765551252759" duration="7247000" />
-    </task>
-    <task id="LOCAL-00007" summary="Update GITHUB_TOKEN in .env for access configuration">
-      <option name="closed" value="true" />
-      <created>1763195721938</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1763195721938</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Clarify comment in scancode_service.py regarding license matching logic">
-      <option name="closed" value="true" />
-      <created>1763196018333</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1763196018333</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Implement extended OSADL license compatibility matrix and enhance SPDX expression parsing">
-      <option name="closed" value="true" />
-      <created>1763370738574</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1763370738574</updated>
     </task>
     <task id="LOCAL-00010" summary="Refactor compatibility matrix loading to use professional matrix and improve SPDX expression handling">
       <option name="closed" value="true" />
@@ -741,7 +721,31 @@
       <option name="project" value="LOCAL" />
       <updated>1765559244093</updated>
     </task>
-    <option name="localTasksCounter" value="56" />
+    <task id="LOCAL-00056" summary="fix: correct logo hover effect filter for consistent styling">
+      <option name="closed" value="true" />
+      <created>1765559530026</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1765559530026</updated>
+    </task>
+    <task id="LOCAL-00057" summary="fix: update workspace configuration for improved XML formatting and readability">
+      <option name="closed" value="true" />
+      <created>1765559546219</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1765559546219</updated>
+    </task>
+    <task id="LOCAL-00058" summary="test: Refactor and enhance test suite for authentication and analysis endpoints">
+      <option name="closed" value="true" />
+      <created>1765559599983</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1765559599983</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -765,8 +769,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: Add LICENSE and THIRD_PART_NOTICE files for licensing information" />
-    <MESSAGE value="feat: Update workspace.xml for licensing information and task tracking" />
     <MESSAGE value="feat: Update README.md and add THRID_PART_NOTICE for licensing information" />
     <MESSAGE value="feat: Refactor README.md and workspace.xml for improved licensing clarity" />
     <MESSAGE value="feat: Add global test configuration and mock data for improved testing framework" />
@@ -789,8 +791,10 @@
     <MESSAGE value="test: add integration tests for /api/zip and /api/analyze endpoints" />
     <MESSAGE value="fix: update workspace configuration for improved test integration and task tracking" />
     <MESSAGE value="Add unit endpoint test" />
+    <MESSAGE value="fix: correct logo hover effect filter for consistent styling" />
     <MESSAGE value="fix: update workspace configuration for improved XML formatting and readability" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: update workspace configuration for improved XML formatting and readability" />
+    <MESSAGE value="test: Refactor and enhance test suite for authentication and analysis endpoints" />
+    <option name="LAST_COMMIT_MESSAGE" value="test: Refactor and enhance test suite for authentication and analysis endpoints" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
