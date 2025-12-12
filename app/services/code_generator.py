@@ -4,7 +4,7 @@ license compatibility.
 """
 
 from typing import Optional
-from app.services.llm_helper import _call_ollama  # se vuoi rendere pubblico, spostalo
+from app.services.llm_helper import _call_ollama, _call_ollama_deepseek  # se vuoi rendere pubblico, spostalo
 
 def regenerate_code(
     code_content: str,

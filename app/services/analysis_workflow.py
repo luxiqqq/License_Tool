@@ -201,6 +201,8 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
             fpath = issue.file_path
             files_to_regenerate.append(issue)
             # Esempio filtro estensioni
+            if fpath.endswith(('.md', '.txt', '.rst')):
+                continue
             files_to_regenerate.append(issue)
 
     # Processes each incompatible file for regeneration

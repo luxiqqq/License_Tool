@@ -18,13 +18,6 @@ import pytest
 from unittest.mock import patch
 from app.services.compatibility import evaluator
 
-def _msg_matches(s: str, en: str, it: str) -> bool:
-    """
-    Returns True if string `s` is in english (`en`)
-    or italian (`it`).
-    """
-    return (en in s) or (it in s)
-
 """
 The following classes are defined here to mock the behavior of the real SPDX parser nodes.
 They are required because `evaluator.py` performs `isinstance()` checks that must pass
