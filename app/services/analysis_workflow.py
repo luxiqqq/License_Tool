@@ -12,7 +12,6 @@ from app.services.scancode_service import (
 )
 from app.services.compatibility import check_compatibility
 from app.services.suggestion import enrich_with_llm_suggestions
-from app.services.report_service import generate_report
 from app.core.config import CLONE_BASE_DIR
 import os
 
@@ -136,13 +135,11 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     ]
 
     # 8) Genera report su disco
-    report_path = generate_report(repo_path, main_license, license_issue_models)
 
     return AnalyzeResponse(
         repository=f"{owner}/{repo}",
         main_license=main_license,
         issues=license_issue_models,
-        report_path=report_path,
     )
 
 def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeResponse) -> AnalyzeResponse:
@@ -260,11 +257,9 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     ]
 
     # 8) Genera report su disco
-    report_path = generate_report(repo_path, main_license, license_issue_models)
 
     return AnalyzeResponse(
         repository=f"{owner}/{repo}",
         main_license=main_license,
         issues=license_issue_models,
-        report_path=report_path,
     )

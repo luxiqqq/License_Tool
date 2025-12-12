@@ -670,7 +670,6 @@ def mock_scancode_and_llm():
     - extract_file_licenses_from_llm: Estrazione licenze via LLM
     - check_compatibility: Verifica compatibilità licenze
     - enrich_with_llm_suggestions: Arricchimento con AI
-    - generate_report: Generazione report su disco
 
     Questo fixture rende i test IBRIDI anziché di integrazione pura.
     """
@@ -679,8 +678,7 @@ def mock_scancode_and_llm():
             patch('app.services.analysis_workflow.filter_with_regex') as mock_filter, \
             patch('app.services.analysis_workflow.extract_file_licenses_from_llm') as mock_extract, \
             patch('app.services.analysis_workflow.check_compatibility') as mock_compat, \
-            patch('app.services.analysis_workflow.enrich_with_llm_suggestions') as mock_enrich, \
-            patch('app.services.analysis_workflow.generate_report') as mock_report:
+            patch('app.services.analysis_workflow.enrich_with_llm_suggestions') as mock_enrich:
 
         # Mock ScanCode output
         mock_scancode.return_value = {
@@ -714,17 +712,13 @@ def mock_scancode_and_llm():
         # Mock enriched issues (nessun problema per MIT->MIT)
         mock_enrich.return_value = []
 
-        # Mock report generation
-        mock_report.return_value = '/tmp/test_report.txt'
-
         yield {
             'scancode': mock_scancode,
             'detect': mock_detect,
             'filter': mock_filter,
             'extract': mock_extract,
             'compat': mock_compat,
-            'enrich': mock_enrich,
-            'report': mock_report
+            'enrich': mock_enrich
         }
 
 
@@ -738,7 +732,7 @@ def test_run_analysis_success_after_upload(sample_zip_file, mock_scancode_and_ll
     2. Esecuzione dell'analisi sulla repo estratta (workflow mockato)
     3. Verifica del risultato
 
-    Mock utilizzati: 7 (ScanCode, LLM, filtri, compatibilità, report)
+    Mock utilizzati: 6 (ScanCode, LLM, filtri, compatibilità)
     """
     # Step 1: Upload ZIP
     files = {
@@ -767,7 +761,6 @@ def test_run_analysis_success_after_upload(sample_zip_file, mock_scancode_and_ll
     assert result['repository'] == 'analyzeowner/analyzerepo'
     assert result['main_license'] == 'MIT'
     assert isinstance(result['issues'], list)
-    assert 'report_path' in result
 
 def test_run_analysis_with_incompatible_licenses(sample_zip_file, cleanup_test_repos):
     """
@@ -846,7 +839,7 @@ def test_complete_workflow_upload_analyze(sample_zip_file, mock_scancode_and_llm
     2. Analisi completa (workflow mockato)
     3. Verifica consistenza dati tra upload e analisi
 
-    Mock utilizzati: 7 (via fixture mock_scancode_and_llm)
+    Mock utilizzati: 6 (via fixture mock_scancode_and_llm)
     """
     owner, repo = 'workflowowner', 'workflowrepo'
 
@@ -867,10 +860,7 @@ def test_complete_workflow_upload_analyze(sample_zip_file, mock_scancode_and_llm
     result = analyze_resp.json()
     assert result['repository'] == f'{owner}/{repo}'
     assert result['main_license'] is not None
-    assert 'report_path' in result
 
-    # Verifica che il report path sia stato generato (è mockato, quindi non esiste fisicamente)
-    assert result['report_path'] is not None
 
 """
 Test di INTEGRAZIONE per gli endpoint /api/regenerate e /api/download
@@ -966,7 +956,6 @@ def sample_analyze_response():
                 suggestion="Consider relicensing or removing this file"
             )
         ],
-        report_path="/tmp/old_report.txt"
     )
 
 
@@ -1050,7 +1039,6 @@ def test_regenerate_analysis_invalid_repository_format():
         "repository": "noslash",  # Manca "/"
         "main_license": "MIT",
         "issues": [],
-        "report_path": "/tmp/report.txt"
     }
 
     response = client.post("/api/regenerate", json=invalid_payload)
@@ -1073,7 +1061,6 @@ def test_regenerate_analysis_repository_not_found(cleanup_test_repos):
             "repository": "missingowner/missingrepo",
             "main_license": "MIT",
             "issues": [],
-            "report_path": "/tmp/report.txt"
         }
 
         response = client.post("/api/regenerate", json=payload)
@@ -1095,7 +1082,6 @@ def test_regenerate_analysis_generic_exception(cleanup_test_repos):
             "repository": "errorowner/errorrepo",
             "main_license": "MIT",
             "issues": [],
-            "report_path": "/tmp/report.txt"
         }
 
         response = client.post("/api/regenerate", json=payload)
@@ -1112,7 +1098,7 @@ def test_regenerate_analysis_missing_issues_field():
     incomplete_payload = {
         "repository": "owner/repo",
         "main_license": "MIT"
-        # Manca 'issues' e 'report_path' (required fields)
+        # Manca 'issues' (required fields)
     }
 
     response = client.post("/api/regenerate", json=incomplete_payload)
@@ -1347,7 +1333,6 @@ def test_complete_workflow_integration(create_test_repo, cleanup_test_repos):
             repository=f"{owner}/{repo}",
             main_license="MIT",
             issues=[],
-            report_path="/tmp/report.txt"
         )
 
         analyze_resp = client.post("/api/analyze", json={"owner": owner, "repo": repo})
@@ -1360,7 +1345,6 @@ def test_complete_workflow_integration(create_test_repo, cleanup_test_repos):
             repository=f"{owner}/{repo}",
             main_license="MIT",
             issues=[],
-            report_path="/tmp/new_report.txt"
         )
 
         regen_resp = client.post("/api/regenerate", json=analyze_result)
