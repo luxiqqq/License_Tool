@@ -109,11 +109,14 @@ def remove_main_license(main_spdx, path, scancode_data) -> dict:
     for file_entry in scancode_data.get("files", []):
         for det in file_entry.get("matches", []):
             if file_entry.get("path") == path and det.get("license_spdx") == main_spdx:
-                scancode_data["files"].remove(file_entry)
+                try:
+                    scancode_data["files"].remove(file_entry)
+                except ValueError:
+                    pass
 
     return scancode_data
 
-def filter_with_llm(scancode_data: dict, main_spdx: str, path: str) -> dict:
+def filter_with_regex(scancode_data: dict, main_spdx: str, path: str) -> dict:
     """
     Filtra i risultati di ScanCode usando un LLM per rimuovere
     i falsi positivi basati sul testo della licenza rilevata.
@@ -155,7 +158,7 @@ def build_minimal_json(scancode_data: dict) -> dict:
             # 'matches' contiene i dettagli (start_line, end_line, matched_text)
             for match in det.get("matches", []):
 
-                if match.get("from_file") == path:
+                if match.get("from_file") == path and "LicenseRef" not in match.get("license_expression_spdx"):
 
                     file_matches.append({
                         "license_spdx": match.get("license_expression_spdx"),
@@ -182,100 +185,6 @@ def build_minimal_json(scancode_data: dict) -> dict:
         json.dump(minimal, f, indent=4, ensure_ascii=False)
 
     return minimal
-
-def ask_llm_to_filter_licenses(minimal_json: dict) -> dict:
-    """
-    Manda il JSON ridotto al LLM e ritorna il JSON pulito
-    (match filtrati).
-    Analizza SOLO matched_text.
-    """
-
-    prompt = f"""
-Sei un esperto di licenze open source.
-
-Ti fornisco un JSON contenente una lista di FILE, ognuno con i suoi MATCH di licenza rilevati.
-Il tuo compito è analizzare ogni match e decidere se è valido o meno.
-
-ANALIZZA SOLO:
-    matched_text  (per capire se è una licenza)
-    license_spdx  (per validità del nome della licenza)
-
-Gli altri campi (path, score) sono metadati.
-
-────────────────────────────────────────
-CRITERIO DI FILTRO (usa matched_text + license_spdx)
-────────────────────────────────────────
-
-SCARTA il match se matched_text è:
-
-❌ un riferimento (es. "see LICENSE", "Apache License link")
-❌ un link a licenze (https://opensource.org/licenses/…)
-❌ una descrizione della licenza (non il testo reale)
-❌ un frammento di documentazione / commento generico
-❌ una citazione in changelog, tutorial, README, docstring
-❌ un semplice nome della licenza senza header/testo
-❌ un match ereditato da altri file (IGNORA from_file)
-❌ testo troppo breve o non legal-formal (meno di ~20 caratteri)
-
-TIENI il match SOLO se matched_text è:
-
-✅ un testo reale di licenza (MIT, GPL, Apache, BSD, MPL, etc.)
-✅ un header di licenza usato nei file sorgente
-✅ un testo formale di licenza >= 20 caratteri
-✓ uno SPDX tag valido (es. “SPDX-License-Identifier: Apache-2.0”)
-
-────────────────────────────────────────
-VALIDAZIONE DI license_spdx (nuova regola)
-────────────────────────────────────────
-
-1. Se `license_spdx` è il nome di una licenza *valida* (SPDX ufficiale):
-   → tienilo così com'è.
-
-2. Se `license_spdx` NON è valido:
-   → analizza *solo* il `matched_text` e prova a riconoscere una licenza reale.
-      - se il testo contiene una licenza riconoscibile
-        (es. inizia con “Apache License Version 2.0”, “MIT License”, “GNU General Public License”, ecc.)
-        → SOSTITUISCI license_spdx con l’identificatore SPDX corretto.
-      - se dal testo NON si riesce a identificare alcuna licenza valida
-        → SCARTA completamente il match.
-
-────────────────────────────────────────
-FORMATO RISPOSTA **OBBLIGATORIO**
-────────────────────────────────────────
-
-Rispondi SOLO con un JSON:
-
-{{
-  "files": [
-    {{
-      "path": "<path>",
-      "matches": [
-        {{
-          "license_spdx": "<SPDX>"
-        }}
-      ]
-      "score": <score>
-    }}
-  ]
-}}
-
-- includi solo i file che hanno almeno un match valido
-- per ogni match tieni il license_spdx (eventualmente corretto)
-- non inserire nulla che non rispetta i criteri sopra
-
-────────────────────────────────────────
-
-Ecco il JSON da analizzare:
-
-{json.dumps(minimal_json, indent=2)}
-"""
-
-    llm_response = _call_ollama_gpt(prompt)
-
-    try:
-        return json.loads(llm_response)
-    except json.JSONDecodeError:
-        raise RuntimeError("Il modello ha restituito una risposta non valida")
 
 def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
     """
@@ -348,81 +257,93 @@ def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
             matched_text = match.get('matched_text', '').strip()
             spdx = match.get('license_spdx', '')
 
-            # --- FASE A: FILTRO PRELIMINARE SUL TESTO ---
+            # -----------------------------------------------------------------
+            # 1. VALIDAZIONE POSITIVA (WHITELIST) - La facciamo PRIMA!
+            # -----------------------------------------------------------------
 
-            # 0. Check se è un LINK VALIDO a una licenza (RST, Markdown, URL diretto)
-            # Questi link sono utili e NON devono essere scartati
+            is_valid_declaration = False
+            match_source = None
+
+            # A. Controllo Tag SPDX Esplicito (Priorità Massima)
+            spdx_tag_hit = re_spdx_tag.search(matched_text)
+            if spdx_tag_hit:
+                is_valid_declaration = True
+                match_source = "SPDX-TAG"
+
+            # B. Controllo Testo Legale Boilerplate (Es. "Permission hereby granted...")
+            elif not is_valid_declaration:
+                for pattern_re in valid_license_patterns:
+                    if pattern_re.search(matched_text):
+                        is_valid_declaration = True
+                        match_source = "LEGAL-TEXT"
+                        break
+
+            # C. Controllo Link Validi (Es. link a file LICENSE o URL gnu.org)
             is_valid_license_link = False
-            for pattern_re in valid_link_patterns:
-                if pattern_re.search(matched_text):
-                    is_valid_license_link = True
-                    break
+            if not is_valid_declaration:
+                for pattern_re in valid_link_patterns:
+                    if pattern_re.search(matched_text):
+                        is_valid_license_link = True
+                        is_valid_declaration = True
+                        match_source = "VALID-LINK"
+                        break
 
-            # 1. Lunghezza minima (salvo se contiene SPDX tag esplicito o è un link valido)
-            if len(matched_text) < min_text_length and "SPDX-License-Identifier" not in matched_text and not is_valid_license_link:
-                continue
+            # -----------------------------------------------------------------
+            # 2. FILTRO NEGATIVO (BLACKLIST) - Solo se non è già validato
+            # -----------------------------------------------------------------
 
-            # 2. Scarta Riferimenti/Link generici ("see LICENSE", "http://...")
-            # MA NON scartare se è un link valido a licenza riconosciuto
-            # Applichiamo questo filtro solo se il testo è breve (< 300 char).
-            if len(matched_text) < 300 and not is_valid_license_link:
-                if re_references.search(matched_text):
+            # Se il testo è GIA' riconosciuto come valido (es. License :: OSI Approved),
+            # SALTIAMO i controlli di ignoranza.
+            if not is_valid_declaration:
+
+                # Lunghezza minima
+                if len(matched_text) < min_text_length:
                     continue
 
-            # 3. Scarta Linguaggio da Changelog/Docs (deprecate, switch to...)
-            # MA NON scartare se è un link valido a licenza
-            if not is_valid_license_link:
+                # Scarta Riferimenti/Link generici
+                # Qui è dove "License ::" veniva ucciso dal regex "^license:"
+                if len(matched_text) < 300:
+                    if re_references.search(matched_text):
+                        continue
+
+                # Scarta Linguaggio da Changelog
                 if re_docs_changelog.search(matched_text):
                     continue
 
-            # --- FASE B: VALIDAZIONE E CORREZIONE SPDX ---
+            # -----------------------------------------------------------------
+            # 3. FILTRO FINALE ("Zero Trust")
+            # -----------------------------------------------------------------
 
-            final_spdx = None
-            is_valid_spdx = True
-
-            # Verifica validità base dello scancode trovato
-            if not spdx or "unknown" in spdx.lower() or "scancode" in spdx.lower():
-                is_valid_spdx = False
-
-            # --- FASE C: VERIFICA CHE IL TESTO SIA LEGALE EFFETTIVO ---
-
-            # Check se il testo contiene frasi legali tipiche di licenze
-            has_valid_legal_text = False
-
-            # I link validi a licenze sono considerati testo legale valido
-            if is_valid_license_link:
-                has_valid_legal_text = True
-
-            # Check pattern di testo legale
-            if not has_valid_legal_text:
-                for pattern_re in valid_license_patterns:
-                    if pattern_re.search(matched_text):
-                        has_valid_legal_text = True
-                        break
-
-            # Check per tag SPDX esplicito nel testo
-            spdx_tag_match = re_spdx_tag.search(matched_text)
-            if spdx_tag_match:
-                has_valid_legal_text = True
-                # Se troviamo un tag SPDX esplicito, usiamo quello come SPDX finale
-                if not is_valid_spdx:
-                    final_spdx = spdx_tag_match.group(1)
-
-            # Se non è testo legale valido e non c'è tag SPDX, scarta
-            if not has_valid_legal_text and not is_valid_spdx:
+            # Se dopo tutto questo non è una dichiarazione valida, scarta.
+            if not is_valid_declaration:
                 continue
 
-            # Determina SPDX finale
-            if is_valid_spdx:
-                final_spdx = spdx
-            elif not final_spdx and has_valid_legal_text:
-                # Testo legale valido ma nessun SPDX trovato - lo teniamo con SPDX originale o unknown
-                final_spdx = spdx if spdx else "LicenseRef-scancode-unknown"
+                # -----------------------------------------------------------------
+            # 4. ASSEGNAZIONE ID SPDX FINALE
+            # -----------------------------------------------------------------
 
-            # Se abbiamo trovato un SPDX valido (originale o recuperato) lo aggiungiamo
+            final_spdx = None
+
+            # Verifica validità formale ID Scancode
+            scancode_id_ok = False
+            if spdx and "unknown" not in spdx.lower() and "scancode" not in spdx.lower():
+                scancode_id_ok = True
+
+            # Caso 1: Tag SPDX Esplicito
+            if spdx_tag_hit:
+                final_spdx = spdx_tag_hit.group(1) or spdx_tag_hit.group(3)
+
+            # Caso 2: Scancode ID valido
+            if not final_spdx and scancode_id_ok:
+                final_spdx = spdx
+
+            # Caso 3: Fallback
+            if not final_spdx:
+                final_spdx = "LicenseRef-scancode-unknown"
+
             if final_spdx:
                 valid_matches.append({
-                    "license_spdx": final_spdx,
+                    "license_spdx": final_spdx.strip(),
                     "matched_text": matched_text
                 })
 
@@ -445,27 +366,6 @@ def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
         json.dump(filtered_files, f, indent=4, ensure_ascii=False)
 
     return filtered_files
-
-"""
-NON USATO AL MOMENTO: perchè quando lo usavamo e rigeneravamo  il codice non ci mostrava le licenze che erano state rigenerate solo con la main
-Per capire che intendo prova con psf_requests e poi metti i file: prova3 prova4 e prova5 che abbiamo
-"""
-def remove_mainspdx_from_filespdx(data: dict, main_spdx: str) -> dict:
-    # Nota il [:] alla fine: stiamo iterando su una COPIA della lista
-    for file_entry in data.get("files", [])[:]:
-
-        matches = file_entry.get("matches", [])
-        should_remove = True
-
-        for m in matches:
-            if m.get("license_spdx") != main_spdx:
-                should_remove = False
-                break  # Trovato un motivo per rimuovere, smettiamo di cercare nei match
-
-        if should_remove:
-            data["files"].remove(file_entry) # Rimuoviamo il file una volta sola
-
-    return data
 
 #  ------------ FUNZIONI PER RILEVARE LA LICENZA PRINCIPALE DAL JSON SCANCODE -----------------
 
