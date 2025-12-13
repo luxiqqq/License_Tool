@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import TripleToggleSwitch from '../components/TripleToggleSwitch';
 import axios from 'axios';
 import {
     CheckCircle,
@@ -30,7 +31,7 @@ const Callback = () => {
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [error, setError] = useState('');
     const [source, setSource] = useState('clone'); // clone or upload
-    const [filterState, setFilterState] = useState(2); // 1: Incompatible, 2: All, 3: Compatible
+    const [filterState, setFilterState] = useState(2); // 1: Compatible, 2: All, 3: Incompatible
 
     // Simulated progress for analysis
     const [progressStep, setProgressStep] = useState(0);
@@ -340,39 +341,29 @@ const Callback = () => {
                                     <AlertTriangle size={20} /> License Issues & Compatibility
                                 </h3>
 
-                                <div className="toggle-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                    <span style={{
-                                        fontSize: '0.8rem',
-                                        opacity: filterState === 1 ? 1 : 0.5,
-                                        color: filterState === 1 ? '#f44336' : 'inherit',
-                                        fontWeight: filterState === 1 ? 'bold' : 'normal'
-                                    }}>Incompatible</span>
-
-                                    <input
-                                        type="range"
-                                        min="1"
-                                        max="3"
-                                        step="1"
-                                        value={filterState}
-                                        onChange={(e) => setFilterState(parseInt(e.target.value))}
-                                        className={`tgl-def state-${filterState}`}
+                                <div className="toggle-wrapper" style={{ minWidth: '300px', height: '60px', position: 'relative' }}>
+                                    <TripleToggleSwitch
+                                        labels={{
+                                            left: { title: "Compatible", value: "left" },
+                                            center: { title: "All", value: "center" },
+                                            right: { title: "Incompatible", value: "right" }
+                                        }}
+                                        value={filterState === 1 ? 'left' : filterState === 3 ? 'right' : 'center'}
+                                        onChange={(val) => {
+                                            if (val === 'left') setFilterState(1);
+                                            if (val === 'center') setFilterState(2);
+                                            if (val === 'right') setFilterState(3);
+                                        }}
                                     />
-
-                                    <span style={{
-                                        fontSize: '0.8rem',
-                                        opacity: filterState === 3 ? 1 : 0.5,
-                                        color: filterState === 3 ? '#4caf50' : 'inherit',
-                                        fontWeight: filterState === 3 ? 'bold' : 'normal'
-                                    }}>Compatible</span>
                                 </div>
                             </div>
 
                             {/* Filter Logic */}
                             {(() => {
                                 const issuesToRender = displayData.issues.filter(issue => {
-                                    if (filterState === 1) return !issue.compatible; // Show only incompatible
-                                    if (filterState === 3) return issue.compatible;  // Show only compatible
-                                    return true; // Show all (State 2)
+                                    if (filterState === 1) return issue.compatible; // State 1: Show only Compatible
+                                    if (filterState === 3) return !issue.compatible;  // State 3: Show only Incompatible
+                                    return true; // State 2: Show all
                                 });
 
                                 if (issuesToRender.length > 0) {
@@ -408,12 +399,12 @@ const Callback = () => {
                                                                         <span style={{ opacity: 0.6, textDecoration: 'line-through' }}>{originalIssue.detected_license}</span>
                                                                         <ArrowRight size={14} />
                                                                         <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', background: 'rgba(76, 175, 80, 0.2)', color: '#4caf50', fontWeight: 'bold' }}>
-                                                                        {issue.detected_license} (Regenerated)
+                                                                            {issue.detected_license} (Regenerated)
                                                                         </span>
                                                                     </div>
                                                                 ) : (
                                                                     <span style={{ fontSize: '0.9rem', padding: '0.2rem 0.6rem', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', marginTop: '0.5rem', display: 'inline-block' }}>
-                                                                    Detected: {issue.detected_license}
+                                                                        Detected: {issue.detected_license}
                                                                     </span>
                                                                 )}
                                                             </div>
