@@ -4,14 +4,11 @@ This module provides helper functions to interact with the Ollama LLM API.
 
 import json
 import os
-
 import requests
 import subprocess
 import time
-from typing import List, Dict
-from app.core.config import OLLAMA_URL, OLLAMA_GENERAL_MODEL, OLLAMA_HOST_VERSION, OLLAMA_CODING_MODEL, \
+from app.utility.config import OLLAMA_URL, OLLAMA_GENERAL_MODEL, OLLAMA_HOST_VERSION, OLLAMA_CODING_MODEL, \
     OLLAMA_HOST_TAGS, MINIMAL_JSON_BASE_DIR
-
 
 # Controlla se il servizio Ollama risponde entro il timeout indicato.
 def _is_ollama_running(timeout: float = 2.0) -> bool:
@@ -105,7 +102,8 @@ def ensure_ollama_ready(model_name: str, start_if_needed: bool = True, pull_if_n
             raise RuntimeError(f"Model {model_name} not installed.")
         _pull_model(model_name)
 
-def _call_ollama(prompt: str) -> str:
+# Chiamata sincrona semplice all'API Ollama per uso "coding".
+def call_ollama_qwen3_coder(prompt: str) -> str:
     """
     Local Ollama API call for coding tasks.
 
@@ -133,40 +131,7 @@ def _call_ollama(prompt: str) -> str:
 
     return data.get("response", "")
 
-# Chiamata sincrona semplice all'API Ollama per uso "general/GPT-like".
-def _call_ollama_gpt(prompt: json ) -> str:
-    """
-    Local Ollama API call for general GPT tasks.
-    Uses a higher timeout for longer responses.
-
-    Args:
-        prompt (json): The prompt to send to the model.
-
-    Returns:
-        str: The response from the model.
-    """
-    ensure_ollama_ready(model_name=OLLAMA_GENERAL_MODEL)
-    payload = {
-        "model": OLLAMA_GENERAL_MODEL,
-        "prompt": prompt,
-        "stream": False,
-    }
-    resp = requests.post(OLLAMA_URL, json=payload, timeout=240)
-    resp.raise_for_status()
-    data = resp.json()
-
-    # Assicura che la cartella esista e scrive il JSON minimale invece di leggerlo
-    os.makedirs(MINIMAL_JSON_BASE_DIR, exist_ok=True)
-    output_minimal = os.path.join(MINIMAL_JSON_BASE_DIR, "model_output.json")
-
-    with open(output_minimal, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-
-    response = data.get("response", "")
-    data_clean = response.replace("```json", "").replace("```", "")
-    return data_clean
-
-def _call_ollama_deepseek(prompt: str) -> str:
+def call_ollama_deepseek(prompt: str) -> str:
     """
     Effettua una chiamata POST a `OLLAMA_URL` usando il modello generale.
     Maggior timeout per risposte più lunghe.

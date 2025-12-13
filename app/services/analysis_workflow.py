@@ -9,16 +9,16 @@ import tempfile
 import zipfile
 from fastapi import UploadFile, HTTPException
 from app.models.schemas import AnalyzeResponse, LicenseIssue
-from app.services.github_client import clone_repo
-from app.services.scancode_service import (
+from app.services.github.github_client import clone_repo
+from app.services.scanner.detection import (
     run_scancode,
     detect_main_license_scancode,
-    extract_file_licenses_from_llm,
-    filter_with_regex,
+    extract_file_licenses
 )
+from app.services.scanner.filter import filter_licenses
 from app.services.compatibility import check_compatibility
-from app.services.suggestion import enrich_with_llm_suggestions
-from app.core.config import CLONE_BASE_DIR
+from app.services.llm.suggestion import enrich_with_llm_suggestions
+from app.utility.config import CLONE_BASE_DIR
 import os
 
 def perform_cloning(owner: str, repo: str, oauth_token: str) -> str:
@@ -129,9 +129,9 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     # 3) Identifies the main project license
     main_license, path_license = detect_main_license_scancode(scan_raw)
 
-    # 4) Filters false positives using regex
-    llm_clean = filter_with_regex(scan_raw, main_license, path_license)
-    file_licenses = extract_file_licenses_from_llm(llm_clean)
+    # 4) Filtro LLM
+    llm_clean = filter_licenses(scan_raw, main_license, path_license)
+    file_licenses = extract_file_licenses(llm_clean)
 
     # 5) Checks license compatibility between the main license and file-level licenses
     compatibility = check_compatibility(main_license, file_licenses)
@@ -205,6 +205,8 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     if files_to_regenerate:
         print(f"Found {len(files_to_regenerate)} incompatible files that have to be regenerated...")
         from app.services.code_generator import regenerate_code
+        print(f"Trovati {len(files_to_regenerate)} file incompatibili da rigenerare...")
+        from services.llm.code_generator import regenerate_code
 
         for issue in files_to_regenerate:
             fpath = issue.file_path
@@ -230,7 +232,6 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
                         licenses= issue.licenses
                     )
 
-                    # Validates and writes back the regenerated code
                     if new_code and len(new_code.strip()) > 10:
                         with open(abs_path, "w", encoding="utf-8") as f:
                             f.write(new_code)
@@ -249,9 +250,10 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
 
             main_license, path = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
 
-            llm_clean = filter_with_regex(scan_raw, main_license, path)
+            llm_clean = filter_licenses(scan_raw, main_license, path)
 
-            file_licenses = extract_file_licenses_from_llm(llm_clean)
+            file_licenses = extract_file_licenses(llm_clean)
+
             compatibility = check_compatibility(main_license, file_licenses)
 
             # Aggiorniamo la lista di issues con i nuovi risultati
