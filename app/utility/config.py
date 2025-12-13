@@ -1,8 +1,16 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Costruisci il percorso assoluto verso il file .env
+# __file__ è il percorso di config.py
+# .parent è 'utility'
+# .parent.parent è 'app', dove si trova il file .env
+env_path = Path(__file__).resolve().parent.parent / '.env'
 
+# Carica il file .env specificando il percorso
+load_dotenv(dotenv_path=env_path)
+#load_dotenv()
 # authentication
 CALLBACK_URL = os.getenv("CALLBACK_URL") # Nota il /api se usi il prefix
 
