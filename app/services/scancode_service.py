@@ -124,7 +124,10 @@ def remove_main_license(main_spdx, path, scancode_data) -> dict:
     for file_entry in scancode_data.get("files", []):
         for det in file_entry.get("matches", []):
             if file_entry.get("path") == path and det.get("license_spdx") == main_spdx:
-                scancode_data["files"].remove(file_entry)
+                try:
+                    scancode_data["files"].remove(file_entry)
+                except ValueError:
+                    pass
 
     return scancode_data
 
@@ -165,14 +168,14 @@ def build_minimal_json(scancode_data: dict) -> dict:
             continue
 
         file_matches = []
-        
+
         # ScanCode file-level detections
         for det in file_entry.get("license_detections", []):
 
             # 'matches' contiene i dettagli (start_line, end_line, matched_text)
             for match in det.get("matches", []):
 
-                if match.get("from_file") == path:
+                if match.get("from_file") == path and "LicenseRef" not in match.get("license_expression_spdx"):
 
                     file_matches.append({
                         "license_spdx": match.get("license_expression_spdx"),
@@ -200,101 +203,6 @@ def build_minimal_json(scancode_data: dict) -> dict:
 
     return minimal
 
-def ask_llm_to_filter_licenses(minimal_json: dict) -> dict:
-    """
-    Sends the reduced JSON to the LLM and returns the clean JSON (matches filtered).
-    Analyzes ONLY matched_text.
-    """
-
-    prompt = f"""
-Sei un esperto di licenze open source.
-
-Ti fornisco un JSON contenente una lista di FILE, ognuno con i suoi MATCH di licenza rilevati.
-Il tuo compito è analizzare ogni match e decidere se è valido o meno.
-
-ANALIZZA SOLO:
-    matched_text  (per capire se è una licenza)
-    license_spdx  (per validità del nome della licenza)
-
-Gli altri campi (path, score) sono metadati.
-
-────────────────────────────────────────
-CRITERIO DI FILTRO (usa matched_text + license_spdx)
-────────────────────────────────────────
-
-SCARTA il match se matched_text è:
-
-❌ un riferimento (es. "see LICENSE", "Apache License link")
-❌ un link a licenze (https://opensource.org/licenses/…)
-❌ una descrizione della licenza (non il testo reale)
-❌ un frammento di documentazione / commento generico
-❌ una citazione in changelog, tutorial, README, docstring
-❌ un semplice nome della licenza senza header/testo
-❌ un match ereditato da altri file (IGNORA from_file)
-❌ testo troppo breve o non legal-formal (meno di ~20 caratteri)
-
-TIENI il match SOLO se matched_text è:
-
-✅ un testo reale di licenza (MIT, GPL, Apache, BSD, MPL, etc.)
-✅ un header di licenza usato nei file sorgente
-✅ un testo formale di licenza >= 20 caratteri
-✓ uno SPDX tag valido (es. “SPDX-License-Identifier: Apache-2.0”)
-
-────────────────────────────────────────
-VALIDAZIONE DI license_spdx (nuova regola)
-────────────────────────────────────────
-
-1. Se `license_spdx` è il nome di una licenza *valida* (SPDX ufficiale):
-   → tienilo così com'è.
-
-2. Se `license_spdx` NON è valido:
-   → analizza *solo* il `matched_text` e prova a riconoscere una licenza reale.
-      - se il testo contiene una licenza riconoscibile
-        (es. inizia con “Apache License Version 2.0”, “MIT License”, “GNU General Public License”, ecc.)
-        → SOSTITUISCI license_spdx con l’identificatore SPDX corretto.
-      - se dal testo NON si riesce a identificare alcuna licenza valida
-        → SCARTA completamente il match.
-
-────────────────────────────────────────
-FORMATO RISPOSTA **OBBLIGATORIO**
-────────────────────────────────────────
-
-Rispondi SOLO con un JSON:
-
-{{
-  "files": [
-    {{
-      "path": "<path>",
-      "matches": [
-        {{
-          "license_spdx": "<SPDX>"
-        }}
-      ]
-      "score": <score>
-    }}
-  ]
-}}
-
-- includi solo i file che hanno almeno un match valido
-- per ogni match tieni il license_spdx (eventualmente corretto)
-- non inserire nulla che non rispetta i criteri sopra
-
-────────────────────────────────────────
-
-Ecco il JSON da analizzare:
-
-{json.dumps(minimal_json, indent=2)}
-"""
-
-    llm_response = _call_ollama_gpt(prompt)
-
-    try:
-        return json.loads(llm_response)
-    except json.JSONDecodeError:
-        raise RuntimeError("Invalid response from model.")
-
-
-#  ------------ FUNCTIONS TO DETECT MAIN LICENSE FROM SCANCODE JSON -----------------
 def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
     """
     Filtra i risultati di Scancode usando regole caricate da un file JSON esterno.
@@ -475,27 +383,6 @@ def filter_license_data(data: dict, detected_main_spdx: bool) -> dict:
         json.dump(filtered_files, f, indent=4, ensure_ascii=False)
 
     return filtered_files
-
-"""
-NON USATO AL MOMENTO: perchè quando lo usavamo e rigeneravamo  il codice non ci mostrava le licenze che erano state rigenerate solo con la main
-Per capire che intendo prova con psf_requests e poi metti i file: prova3 prova4 e prova5 che abbiamo
-"""
-def remove_mainspdx_from_filespdx(data: dict, main_spdx: str) -> dict:
-    # Nota il [:] alla fine: stiamo iterando su una COPIA della lista
-    for file_entry in data.get("files", [])[:]:
-
-        matches = file_entry.get("matches", [])
-        should_remove = True
-
-        for m in matches:
-            if m.get("license_spdx") != main_spdx:
-                should_remove = False
-                break  # Trovato un motivo per rimuovere, smettiamo di cercare nei match
-
-        if should_remove:
-            data["files"].remove(file_entry) # Rimuoviamo il file una volta sola
-
-    return data
 
 #  ------------ FUNZIONI PER RILEVARE LA LICENZA PRINCIPALE DAL JSON SCANCODE -----------------
 

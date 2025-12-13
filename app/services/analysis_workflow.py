@@ -18,7 +18,6 @@ from app.services.scancode_service import (
 )
 from app.services.compatibility import check_compatibility
 from app.services.suggestion import enrich_with_llm_suggestions
-from app.services.report_service import generate_report
 from app.core.config import CLONE_BASE_DIR
 import os
 
@@ -155,14 +154,12 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
         for i in enriched_issues
     ]
 
-    # 8) Creates a persistent report on disk
-    report_path = generate_report(repo_path, main_license, license_issue_models)
+    # 8) Genera report su disco
 
     return AnalyzeResponse(
         repository=f"{owner}/{repo}",
         main_license=main_license,
         issues=license_issue_models,
-        report_path=report_path,
     )
 
 def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeResponse) -> AnalyzeResponse:
@@ -199,7 +196,6 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
     for issue in previous_analysis.issues:
         if not issue.compatible:
             fpath = issue.file_path
-            files_to_regenerate.append(issue)
             # Esempio filtro estensioni
             if fpath.endswith(('.md', '.txt', '.rst')):
                 continue
@@ -287,12 +283,10 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
         for i in enriched_issues
     ]
 
+    # 8) Genera report su disco
     # Generates a new report reflecting the updated analysis
-    report_path = generate_report(repo_path, main_license, license_issue_models)
-
     return AnalyzeResponse(
         repository=f"{owner}/{repo}",
         main_license=main_license,
         issues=license_issue_models,
-        report_path=report_path,
     )

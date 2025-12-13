@@ -21,7 +21,6 @@ class AnalyzeResponse(BaseModel):
     repository: str
     main_license: str
     issues: List[LicenseIssue]   # usa il nuovo formato
-    report_path: str
 
 # ----- GITHUB CLONE RESULT (lo lasciamo invariato!) -----
 class CloneResult(BaseModel):

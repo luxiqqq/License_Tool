@@ -2,6 +2,7 @@ import pytest
 import httpx
 from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
+from urllib.parse import urlparse, parse_qs
 from app.main import app
 
 client = TestClient(app)
@@ -12,10 +13,10 @@ client = TestClient(app)
 # ==================================================================================
 
 @pytest.fixture
-def mock_env_credentials():
+def mock_creds():
     """Simula il recupero delle credenziali (CLIENT_ID, SECRET)."""
     with patch("app.api.analysis.github_auth_credentials") as m:
-        m.return_value = "MOCK_SECRET_VALUE"
+        m.return_value = "MOCK_CLIENT_ID"
         yield m
 
 
@@ -59,6 +60,31 @@ def mock_download():
     """Mocka il servizio di creazione pacchetto ZIP per il download."""
     with patch("app.api.analysis.perform_download") as m:
         yield m
+
+
+# Alias per compatibilità con test esistenti
+@pytest.fixture
+def mock_env_credentials(mock_creds):
+    """Alias per mock_creds."""
+    return mock_creds
+
+
+@pytest.fixture
+def mock_httpx_post(mock_httpx_client):
+    """Alias per mock_httpx_client."""
+    return mock_httpx_client
+
+
+@pytest.fixture
+def mock_clone(mock_cloning):
+    """Alias per mock_cloning."""
+    return mock_cloning
+
+
+@pytest.fixture
+def mock_upload_zip(mock_zip_upload):
+    """Alias per mock_zip_upload."""
+    return mock_zip_upload
 
 
 # ==================================================================================
@@ -283,3 +309,167 @@ def test_download_missing_repo(mock_download):
 
     assert response.status_code == 400
     assert "Repo non clonata" in response.json()["detail"]
+
+
+# ==================================================================================
+#                       ADDITIONAL UNIT TESTS (NUOVI RICHIESTI)
+# ==================================================================================
+
+def test_start_redirect_with_url_parsing(mock_creds):
+    """Verifica che l'URL di redirect sia costruito correttamente con parsing robusto."""
+    response = client.get(
+        "/api/auth/start",
+        params={"owner": "facebook", "repo": "react"},
+        follow_redirects=False
+    )
+
+    assert response.status_code in [302, 307]
+
+    # Parsing robusto dell'URL
+    parsed = urlparse(response.headers["location"])
+    params = parse_qs(parsed.query)
+
+    assert parsed.netloc == "github.com"
+    assert params["client_id"] == ["MOCK_CLIENT_ID"]
+    assert params["state"] == ["facebook:react"]
+
+
+@pytest.mark.asyncio
+async def test_callback_with_token_verification(mock_creds, mock_httpx_post, mock_clone):
+    """Verifica il flusso completo di callback con verifica token."""
+    # Mock risposta GitHub
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"access_token": "gh_token_123"}
+    mock_httpx_post.return_value = mock_resp
+
+    # Mock Clone
+    mock_clone.return_value = "/tmp/cloned/facebook/react"
+
+    response = client.get("/api/callback", params={"code": "123", "state": "facebook:react"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "cloned"
+    assert data["local_path"] == "/tmp/cloned/facebook/react"
+
+    # Verifica che il token sia passato al clone
+    mock_clone.assert_called_once()
+    assert mock_clone.call_args[1]['oauth_token'] == "gh_token_123"
+
+
+def test_callback_invalid_state_no_slash():
+    """Errore se lo stato non ha i due punti."""
+    response = client.get("/api/callback", params={"code": "123", "state": "invalid_state"})
+    assert response.status_code == 400
+    assert "Stato non valido" in response.json()["detail"]
+
+
+def test_analyze_with_schema_validation(mock_scan):
+    """Testa l'analisi usando lo schema corretto (AnalyzeResponse)."""
+    # Mock conforme al tuo schema (SENZA 'analysis', CON 'main_license')
+    mock_res = {
+        "repository": "test/repo",
+        "main_license": "MIT",
+        "issues": []
+    }
+    mock_scan.return_value = mock_res
+
+    response = client.post("/api/analyze", json={"owner": "test", "repo": "repo"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["repository"] == "test/repo"
+    assert data["main_license"] == "MIT"
+    assert isinstance(data["issues"], list)
+
+    mock_scan.assert_called_with(owner="test", repo="repo")
+
+
+def test_analyze_missing_required_params():
+    """Verifica che parametri mancanti restituiscano 400."""
+    response = client.post("/api/analyze", json={"owner": "solo_owner"})
+    assert response.status_code == 400
+
+
+def test_regenerate_with_payload_validation(mock_regen):
+    """Verifica rigenerazione con payload corretto."""
+
+    # Payload INPUT (Deve avere main_license, issues)
+    payload = {
+        "repository": "facebook/react",
+        "main_license": "MIT",
+        "issues": []
+    }
+
+    # Mock OUTPUT
+    mock_res = {
+        "repository": "facebook/react",
+        "main_license": "MIT",
+        "issues": []
+    }
+    mock_regen.return_value = mock_res
+
+    response = client.post("/api/regenerate", json=payload)
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["repository"] == "facebook/react"
+    assert data["main_license"] == "MIT"
+
+    mock_regen.assert_called_once()
+    assert mock_regen.call_args[1]['owner'] == "facebook"
+
+
+def test_regenerate_invalid_format():
+    """Input valido per schema, ma repository senza slash."""
+    payload = {
+        "repository": "noslash",
+        "main_license": "N/A",
+        "issues": []
+    }
+    response = client.post("/api/regenerate", json=payload)
+
+    assert response.status_code == 400
+    assert "Formato repository non valido" in response.json()["detail"]
+
+
+def test_download_zip_success(mock_download, tmp_path):
+    """Verifica download zip con validazione contenuto."""
+    dummy_zip = tmp_path / "fake.zip"
+    dummy_zip.write_bytes(b"DATA")
+
+    mock_download.return_value = str(dummy_zip)
+
+    response = client.post("/api/download", json={"owner": "u", "repo": "r"})
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/zip"
+
+
+def test_download_error_handling(mock_download):
+    """Verifica gestione errori durante download."""
+    mock_download.side_effect = ValueError("Non trovata")
+    response = client.post("/api/download", json={"owner": "u", "repo": "r"})
+    assert response.status_code == 400
+
+
+def test_upload_zip_with_file_validation(mock_upload_zip, tmp_path):
+    """Verifica upload zip con validazione file."""
+    fake_zip = tmp_path / "test.zip"
+    fake_zip.write_bytes(b"content")
+
+    mock_upload_zip.return_value = "/tmp/uploaded/path"
+
+    with open(fake_zip, "rb") as f:
+        response = client.post(
+            "/api/zip",
+            data={"owner": "u", "repo": "r"},
+            files={"uploaded_file": ("test.zip", f, "application/zip")}
+        )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "cloned_from_zip"
+

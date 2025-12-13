@@ -8,7 +8,6 @@ from .analysis_workflow import (
 from .code_generator import regenerate_code
 from .github_client import clone_repo
 from .suggestion import enrich_with_llm_suggestions
-from .report_service import generate_report
 from .scancode_service import (
     run_scancode,
     detect_main_license_scancode,
@@ -23,7 +22,6 @@ __all__ = [
     "regenerate_code",
     "clone_repo",
     "enrich_with_llm_suggestions",
-    "generate_report",
     "run_scancode",
     "detect_main_license_scancode",
     "filter_with_regex",
