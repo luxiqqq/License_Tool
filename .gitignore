@@ -29,4 +29,5 @@ __pycache__/
 .venv/
 venv/
 
+.coverage
 # .iml dopo togliere dalla repo di git
