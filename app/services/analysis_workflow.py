@@ -12,19 +12,9 @@ from app.services.scanner.detection import (
 from app.services.scanner.filter import filter_licenses
 from app.services.compatibility import check_compatibility
 from app.services.llm.suggestion import enrich_with_llm_suggestions
+from app.services.llm.code_generator import regenerate_code
 from app.utility.config import CLONE_BASE_DIR
 import os
-
-try:
-    from app.services.llm.code_generator import regenerate_code
-except ImportError:
-    try:
-        from .llm.code_generator import regenerate_code
-    except Exception as e:
-        raise ImportError(
-            "Impossibile importare `regenerate_code` da `app.services.llm` o dal package relativo. "
-            "Verifica l'esecuzione come package (es. `uvicorn app.main:app`) e la presenza di `__init__.py` nelle cartelle."
-        ) from e
 
 def perform_cloning(owner: str, repo: str, oauth_token: str) -> str:
     """
