@@ -31,4 +31,4 @@ venv/
 .env
 
 .coverage
-# .iml dopo togliere dalla repo di git
+.iml
