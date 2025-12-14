@@ -28,4 +28,3 @@ __pycache__/
 *$py.class
 .venv/
 venv/
-*.iml
