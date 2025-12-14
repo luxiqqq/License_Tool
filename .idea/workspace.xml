@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="chore: update .gitignore to exclude .iml files and clean up workspace.xml by removing closed tasks">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="2344456b-b77b-43a2-9bcd-4bdc11d12b4a" name="Changes" comment="chore: update .gitignore">
       <change beforePath="$PROJECT_DIR$/frontend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -352,15 +351,7 @@
       <workItem from="1765551252759" duration="7247000" />
       <workItem from="1765650773873" duration="6363000" />
       <workItem from="1765703665388" duration="1471000" />
-      <workItem from="1765705213873" duration="1103000" />
-    </task>
-    <task id="LOCAL-00017" summary="chore: Update environment configuration for Windows paths and add VCS settings">
-      <option name="closed" value="true" />
-      <created>1764167966069</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1764167966070</updated>
+      <workItem from="1765705213873" duration="1432000" />
     </task>
     <task id="LOCAL-00018" summary="chore: Update environment configuration for Windows paths and enhance repository cloning logic">
       <option name="closed" value="true" />
@@ -746,7 +737,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765705708106</updated>
     </task>
-    <option name="localTasksCounter" value="66" />
+    <task id="LOCAL-00066" summary="chore: update .gitignore">
+      <option name="closed" value="true" />
+      <created>1765706347082</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1765706347082</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -770,7 +769,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: Add comprehensive unit tests for check_compatibility function with detailed scenarios" />
     <MESSAGE value="feat: Update styles and enhance compatibility evaluation tests with additional scenarios" />
     <MESSAGE value="feat: Add unit tests for compatibility matrix loading and status normalization (da Antonella)" />
     <MESSAGE value="feat: Add shared test helpers and fixtures for compatibility evaluation" />
@@ -795,7 +793,8 @@
     <MESSAGE value="feat: update styles for 3-State Toggle Switch and adjust logo hover effect" />
     <MESSAGE value="chore: clean up workspace.xml by removing closed tasks and updating recent changes" />
     <MESSAGE value="chore: update .gitignore to exclude .iml files and clean up workspace.xml by removing closed tasks" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: update .gitignore to exclude .iml files and clean up workspace.xml by removing closed tasks" />
+    <MESSAGE value="chore: update .gitignore" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: update .gitignore" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
