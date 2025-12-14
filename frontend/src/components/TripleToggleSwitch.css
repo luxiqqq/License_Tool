@@ -43,6 +43,19 @@
     color: #6643e2 !important;
 }
 
+.left-label.black-font h4 {
+    color: #2ecc71 !important;
+}
+
+.right-label.black-font h4 {
+    color: #e74c3c !important;
+}
+
+.left-label h4,
+.right-label h4 {
+    font-size: 1.5rem;
+}
+
 .switch {
     height: 44px;
     /* 50 - 2*3 width borders/padding approx */
