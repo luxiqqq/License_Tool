@@ -5,7 +5,7 @@ import pytest
 import json
 from unittest.mock import patch, MagicMock
 from cryptography.fernet import Fernet
-from app.services.github.Encrypted_Auth_Info import decripta_dato_singolo, github_auth_credentials
+from app.services.github.Encrypted_Auth_Info import decripta_dato_singolo, github_auth_credentials, cripta_credenziali
 
 
 class TestDecriptaDatoSingolo:
@@ -399,3 +399,66 @@ class TestGithubAuthCredentials:
 
             assert result == str(["client_id", "secret"])
             mock_client.close.assert_called_once()
+
+
+class TestCriptaCredenziali:
+    """Test per la funzione cripta_credenziali"""
+
+    def test_cripta_credenziali_success(self):
+        """Test crittografia riuscita di una stringa"""
+        original_data = "test_client_id_123"
+
+        result = cripta_credenziali(original_data)
+
+        # Verifica che restituisca una stringa
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+        # Verifica che possa essere decrittata con la stessa chiave
+        key = "XwbBr7IVVPr0d8kBA48pvzSzX1vVQbaZNzvuu5EZTvE="
+        fernet = Fernet(key)
+        decrypted = fernet.decrypt(result.encode('utf-8')).decode('utf-8')
+        assert decrypted == original_data
+
+    def test_cripta_credenziali_empty_string(self):
+        """Test crittografia di una stringa vuota"""
+        original_data = ""
+
+        result = cripta_credenziali(original_data)
+
+        assert isinstance(result, str)
+
+        # Decrittazione
+        key = "XwbBr7IVVPr0d8kBA48pvzSzX1vVQbaZNzvuu5EZTvE="
+        fernet = Fernet(key)
+        decrypted = fernet.decrypt(result.encode('utf-8')).decode('utf-8')
+        assert decrypted == original_data
+
+    def test_cripta_credenziali_special_characters(self):
+        """Test crittografia con caratteri speciali"""
+        original_data = "test@#$%^&*()_+-={}[]|\\:;\"'<>,.?/"
+
+        result = cripta_credenziali(original_data)
+
+        assert isinstance(result, str)
+
+        # Decrittazione
+        key = "XwbBr7IVVPr0d8kBA48pvzSzX1vVQbaZNzvuu5EZTvE="
+        fernet = Fernet(key)
+        decrypted = fernet.decrypt(result.encode('utf-8')).decode('utf-8')
+        assert decrypted == original_data
+
+    def test_cripta_credenziali_unicode_characters(self):
+        """Test crittografia con caratteri unicode"""
+        original_data = "Café € 中文 🔐"
+
+        result = cripta_credenziali(original_data)
+
+        assert isinstance(result, str)
+
+        # Decrittazione
+        key = "XwbBr7IVVPr0d8kBA48pvzSzX1vVQbaZNzvuu5EZTvE="
+        fernet = Fernet(key)
+        decrypted = fernet.decrypt(result.encode('utf-8')).decode('utf-8')
+        assert decrypted == original_data
+
