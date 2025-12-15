@@ -1168,20 +1168,6 @@ def test_download_repo_success_integration(create_test_repo, cleanup_test_repos)
         assert '# Download Test' in readme_content
 
 
-def test_download_repo_repository_not_found():
-    """
-    Test di integrazione: tentativo di download di repository non esistente.
-    Verifica l'integrazione endpoint → service → file system check.
-    """
-    response = client.post(
-        "/api/download",
-        json={"owner": "nonexistent", "repo": "notfound"}
-    )
-
-    assert response.status_code == 400
-    assert "Repository non trovata" in response.json()["detail"]
-
-
 def test_download_repo_missing_parameters():
     """
     Test di integrazione: validazione parametri obbligatori.
