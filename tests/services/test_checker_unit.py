@@ -1,5 +1,6 @@
 # python
 """
+test: services/compatibility/checker.py
 checker.py - Unit tests per la funzione `check_compatibility` nel modulo
 `app.services.compatibility.checker`.
 """
