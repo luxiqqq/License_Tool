@@ -5,7 +5,7 @@ It provides functionality to zip cloned repositories.
 
 import shutil
 import os
-from app.core.config import CLONE_BASE_DIR
+from app.utility.config import CLONE_BASE_DIR
 
 def perform_download(owner: str, repo: str) -> str:
     """
