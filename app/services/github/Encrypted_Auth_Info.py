@@ -19,7 +19,6 @@ def decripta_dato_singolo(encrypted_data_string):
         decrypted_bytes = fernet.decrypt(encrypted_bytes)
         return decrypted_bytes.decode('utf-8')
     except Exception as e:
-        print(f"Errore decifratura: {e}")
         return None
 
 def github_auth_credentials(client_cred: str) -> str | None:
@@ -33,19 +32,12 @@ def github_auth_credentials(client_cred: str) -> str | None:
         doc_id = collection.find_one({"service_name": client_cred})
 
         if not doc_id:
-            print(f"Nessun documento trovato per service_name: {client_cred}")
             return None
 
         client_credential_cifrato = doc_id.get('encrypted_data')
 
         # 1. Decifra
         client_credential = decripta_dato_singolo(client_credential_cifrato)
-
-        # DEBUG: Stampa cosa hai ottenuto davvero
-        print(f"--- DEBUG ---")
-        print(f"Cercavo: {client_cred}")
-        print(f"Dato decifrato grezzo: '{client_credential}'")
-        print(f"--- FINE DEBUG ---")
 
         if not client_credential:
             return None
@@ -68,7 +60,6 @@ def github_auth_credentials(client_cred: str) -> str | None:
             return client_credential
 
     except Exception as e:
-        print(f"Errore durante il recupero: {e}")
         return None
     finally:
         if client:
