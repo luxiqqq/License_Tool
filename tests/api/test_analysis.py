@@ -11,21 +11,21 @@ client = TestClient(app)
 @pytest.fixture
 def mock_env_credentials():
     """Simula le variabili d'ambiente o la funzione che le recupera."""
-    with patch("app.api.analysis.github_auth_credentials", side_effect=["MOCK_CID", "MOCK_SEC"]) as m:
+    with patch("app.controllers.analysis.github_auth_credentials", side_effect=["MOCK_CID", "MOCK_SEC"]) as m:
         yield m
 
 
 @pytest.fixture
 def mock_httpx_post():
     """Mocka la chiamata POST di httpx."""
-    with patch("app.api.analysis.httpx.AsyncClient.post", new_callable=AsyncMock) as m:
+    with patch("app.controllers.analysis.httpx.AsyncClient.post", new_callable=AsyncMock) as m:
         yield m
 
 
 @pytest.fixture
 def mock_clone():
     """Mocka la funzione di clonazione."""
-    with patch("app.api.analysis.perform_cloning") as m:
+    with patch("app.controllers.analysis.perform_cloning") as m:
         yield m
 
 
