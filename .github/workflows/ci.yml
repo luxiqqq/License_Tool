@@ -17,11 +17,11 @@ jobs:
       - name: Checkout del codice
         uses: actions/checkout@v4
 
-      # 2. Configura Python 3.11 (versione rilevata dai tuoi file .pyc)
-      - name: Setup Python 3.11
+      # 2. Configura Python 3.13 (versione rilevata dai tuoi file .pyc)
+      - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: 'pip' # Cacha i pacchetti pip per velocizzare le esecuzioni future
 
       # 3. Installa dipendenze
