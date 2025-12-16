@@ -72,7 +72,7 @@ def cripta_credenziali(client_id: str) -> str:
     key = "XwbBr7IVVPr0d8kBA48pvzSzX1vVQbaZNzvuu5EZTvE="
 
     if not key:
-        raise ValueError("ENCRYPTION_KEY non trovata nel file .env")
+        raise ValueError("ENCRYPTION_KEY not found in .env file")
 
     fernet = Fernet(key)
 
