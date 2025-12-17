@@ -6,6 +6,19 @@ Main Responsibility:
 - Loads the compatibility matrix.
 - Parses SPDX expressions for each file into an evaluation tree.
 - Evaluates the tree against the matrix to determine compliance.
+Behavior:
+- Normalizes the main license
+- Loads the professional matrix (via `matrix.get_matrix`)
+- For each file, parses the SPDX expression via `parser_spdx.parse_spdx`
+  and evaluates via `evaluator.eval_node`
+- Produces a list of issues with the following fields for each file:
+  - file_path: file path
+  - detected_license: detected expression string
+  - compatible: boolean (True if final outcome is yes)
+  - reason: string with detailed trace (useful for report + LLM)
+
+Note: in case of unavailable matrices or missing main license, the function
+returns a set of issues with explanatory reason.
 """
 
 from typing import Dict
@@ -44,7 +57,7 @@ def check_compatibility(main_license: str, file_licenses: Dict[str, str]) -> dic
                 "file_path": file_path,
                 "detected_license": license_expr,
                 "compatible": False,
-                "reason": "Main license not found or invalid (UNKNOWN/NOASSERTION/NONE)",
+                "reason": "Main license not detected or invalid (UNKNOWN/NOASSERTION/NONE)",
             })
         return {"main_license": main_license or "UNKNOWN", "issues": issues}
 
@@ -54,7 +67,7 @@ def check_compatibility(main_license: str, file_licenses: Dict[str, str]) -> dic
                 "file_path": file_path,
                 "detected_license": license_expr,
                 "compatible": False,
-                "reason": "Matrix not available or main license not in matric",
+                "reason": "Professional matrix not available or main license not present in the matrix",
             })
         return {"main_license": main_license_n, "issues": issues}
 
@@ -72,7 +85,7 @@ def check_compatibility(main_license: str, file_licenses: Dict[str, str]) -> dic
         else:
             compatible = False
             hint = "conditional" if status == "conditional" else "unknown"
-            reason = "; ".join(trace) + f"; Esito: {hint}. Manual compliace verification required."
+            reason = "; ".join(trace) + f"; Outcome: {hint}. Requires compliance/manual verification."
 
         issues.append({
             "file_path": file_path,

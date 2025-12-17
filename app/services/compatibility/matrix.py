@@ -60,7 +60,7 @@ def _read_matrix_json() -> dict | None:
                 # resource not present
                 return None
             except Exception:
-                logger.exception("An error occurred trying to read matrixseqexpl.json as a resource for package %s", __package__)
+                logger.exception("Error reading matrixseqexpl.json as package resource %s", __package__)
                 return None
     except Exception:
         # we never want to propagate exceptions here
@@ -92,7 +92,7 @@ def load_professional_matrix() -> Dict[str, Dict[str, str]]:
     try:
         data = _read_matrix_json()
         if not data:
-            logger.info("File matrixseqexpl.json not found or empty. Searched path: %s", _MATRIXSEQEXPL_PATH)
+            logger.info("File matrixseqexpl.json not found or empty. Path searched: %s", _MATRIXSEQEXPL_PATH)
             return {}
 
         # old structure: {"matrix": {...}}
@@ -158,7 +158,7 @@ def load_professional_matrix() -> Dict[str, Dict[str, str]]:
                 return normalized
 
     except Exception:
-        logger.exception("An error occurred during the normalization of the compatibility matrix")
+        logger.exception("Error during compatibility matrix normalization")
     return {}
 
 
@@ -168,7 +168,7 @@ _PRO_MATRIX = load_professional_matrix()
 
 def get_matrix() -> Dict[str, Dict[str, str]]:
     """
-    Returns the normalized matrix (can be empty if the file is not present).
+    Returns the normalized matrix (may be empty if the file is not present).
     """
     return _PRO_MATRIX
 

@@ -71,7 +71,7 @@ def eval_node(main_license: str, node: Optional[Node]) -> Tuple[Tri, List[str]]:
               useful for reporting and debugging.
     """
     if node is None:
-        return "unknown", ["Expression missed or not recognized"]
+        return "unknown", ["Missing expression or not recognized"]
 
     if isinstance(node, Leaf):
         val = node.value
@@ -80,16 +80,16 @@ def eval_node(main_license: str, node: Optional[Node]) -> Tuple[Tri, List[str]]:
             base = normalize_symbol(base)
             exc = exc.strip()
             status = _lookup_status(main_license, base)
-            reason = f"{base} (with exception: {exc}) → {status} for {main_license}"
+            reason = f"{base} (with exception: {exc}) → {status} with respect to {main_license}"
             if exc:
                 if status != "yes":
-                    reason += "; Note: exception requires manual verification."
+                    reason += "; Note: exception presence requires manual verification on exception impact"
                 else:
-                    reason += "; Exception found: check if compatibility is altered."
+                    reason += "; Exception detected: verify if the exception alters compatibility"
             return status, [reason]
         else:
             status = _lookup_status(main_license, val)
-            reason = f"{val} → {status} for {main_license}"
+            reason = f"{val} → {status} with respect to {main_license}"
             return status, [reason]
 
     if isinstance(node, And):
@@ -120,7 +120,7 @@ def eval_node(main_license: str, node: Optional[Node]) -> Tuple[Tri, List[str]]:
         for L in left_leaves:
             for R in right_leaves:
                 st_lr = _lookup_status(L, R)
-                cross_checks.append(f"Compatibilità incrociata: {L} rispetto a {R} → {st_lr}")
+                cross_checks.append(f"Cross compatibility: {L} with respect to {R} → {st_lr}")
 
         trace = ltrace + rtrace + cross_checks
         return combined, trace
@@ -132,4 +132,4 @@ def eval_node(main_license: str, node: Optional[Node]) -> Tuple[Tri, List[str]]:
         trace = ltrace + rtrace + [f"OR ⇒ {combined}"]
         return combined, trace
 
-    return "unknown", ["Node not recognized"]
+    return "unknown", ["Unrecognized node"]

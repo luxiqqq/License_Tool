@@ -1,3 +1,4 @@
+import json
 """
 This module orchestrates the entire license analysis pipeline: it handles
 the sequence of cloning, scanning, filtering, compatibility checking, and
@@ -63,7 +64,7 @@ def perform_upload_zip(owner: str, repo: str, uploaded_file: UploadFile) -> str:
 
     # Validazione estensione
     if not uploaded_file.filename.endswith('.zip'):
-        raise HTTPException(status_code=400, detail="Il file caricato deve essere un archivio .zip")
+        raise HTTPException(status_code=400, detail="The uploaded file must be a .zip archive")
 
     try:
         # 2. Uso di una directory temporanea per l'estrazione
@@ -96,12 +97,12 @@ def perform_upload_zip(owner: str, repo: str, uploaded_file: UploadFile) -> str:
             shutil.copytree(source_to_move, target_dir)
 
     except zipfile.BadZipFile:
-        raise HTTPException(status_code=400, detail="Il file fornito è un file zip corrotto o non valido.")
+        raise HTTPException(status_code=400, detail="The provided file is corrupted or not a valid zip file.")
     except Exception as e:
         # Pulizia extra in caso di errore (se target_dir è stata creata parzialmente)
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir)
-        raise HTTPException(status_code=500, detail=f"Errore durante l'elaborazione dello zip: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error while processing zip file: {str(e)}")
     finally:
         uploaded_file.file.close()
 
@@ -122,7 +123,7 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     repo_path = os.path.join(CLONE_BASE_DIR, f"{owner}_{repo}")
 
     if not os.path.exists(repo_path):
-        raise ValueError(f"Couldn't find the specified repository in {repo_path}. Try cloning first.")
+        raise ValueError(f"Repository not found at {repo_path}. Please clone it first.")
 
     # 2) Runs ScanCode to detect raw license data
     scan_raw = run_scancode(repo_path)
@@ -137,7 +138,7 @@ def perform_initial_scan(owner: str, repo: str) -> AnalyzeResponse:
     # 5) Checks license compatibility between the main license and file-level licenses
     compatibility = check_compatibility(main_license, file_licenses)
 
-    # 6) Suggerimenti AI (senza rigenerazione per ora)
+# 6) Suggerimenti AI (senza rigenerazione per ora)
     # Passiamo una mappa vuota perché non abbiamo ancora rigenerato nulla
     enriched_issues = enrich_with_llm_suggestions(main_license, compatibility["issues"], {})
 
@@ -184,10 +185,13 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
 
 
     if not os.path.exists(repo_path):
-        raise ValueError(f"Couldn't find the specified repository in {repo_path}. Try running the initial scan first.")
+        raise ValueError(f"Repository not found at {repo_path}. Please run initial scan first.")
 
     # Retrieves data from the previous analysis
     main_license = previous_analysis.main_license
+    # previous_analysis.issues è una lista di oggetti LicenseIssue (Pydantic)
+    # La logica sotto si aspetta spesso dei dict o oggetti accessibili.
+    # Se 'issues' sono oggetti Pydantic, possiamo accedervi con .attribute
 
     # --- REGENERATION LOGIC ---
     regenerated_files_map = {}  # file_path -> new_code_content
@@ -195,6 +199,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
 
     # Identifies incompatible files, excluding non-code files
     for issue in previous_analysis.issues:
+        # issue è un oggetto LicenseIssue
         if not issue.compatible:
             fpath = issue.file_path
             # Esempio filtro estensioni
@@ -204,9 +209,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
 
     # Processes each incompatible file for regeneration
     if files_to_regenerate:
-        print(f"Found {len(files_to_regenerate)} incompatible files that have to be regenerated...")
-        from app.services.code_generator import regenerate_code
-        print(f"Trovati {len(files_to_regenerate)} file incompatibili da rigenerare...")
+        print(f"Found {len(files_to_regenerate)} incompatible files to regenerate...")
 
         for issue in files_to_regenerate:
             fpath = issue.file_path
@@ -233,19 +236,20 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
                     )
 
                     if new_code and len(new_code.strip()) > 10:
+                        # Sovrascrittura file
                         with open(abs_path, "w", encoding="utf-8") as f:
                             f.write(new_code)
 
                         regenerated_files_map[fpath] = new_code
-                        print(f"Regenerated code: {fpath} (Length: {len(new_code)})")
+                        print(f"Regenerated: {fpath} (Length: {len(new_code)})")
                     else:
-                        print(f"Failed regeneration or invalid code for {fpath}")
+                        print(f"Regeneration failed or invalid code for {fpath}")
                 except Exception as e:
-                    print(f"An error occurred while regenerating {fpath}: {e}")
+                    print(f"Regeneration error {fpath}: {e}")
 
         # Partial re-scan is needed to update the compatibility status
         if regenerated_files_map:
-            print("Performing the scan again after regeneration...")
+            print("Re-running post-regeneration scan...")
             scan_raw = run_scancode(repo_path)
 
             main_license, path = detect_main_license_scancode(scan_raw) # Main license non dovrebbe cambiare
@@ -285,8 +289,7 @@ def perform_regeneration(owner: str, repo: str, previous_analysis: AnalyzeRespon
         for i in enriched_issues
     ]
 
-    # 8) Genera report su disco
-    # Generates a new report reflecting the updated analysis
+   # Generates a new report reflecting the updated analysis
     return AnalyzeResponse(
         repository=f"{owner}/{repo}",
         main_license=main_license,

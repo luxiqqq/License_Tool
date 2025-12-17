@@ -4,7 +4,7 @@ license compatibility.
 """
 
 from typing import Optional
-from app.services.llm.ollama_api import call_ollama_qwen3_coder  # se vuoi rendere pubblico, spostalo
+from app.services.llm.ollama_api import call_ollama_qwen3_coder  # if you want to make it public, move it
 
 def regenerate_code(
     code_content: str,
@@ -31,14 +31,14 @@ def regenerate_code(
         Optional[str]: The clean, extracted source code string, or None if generation fails.
     """
     prompt = (
-        f"Sei un esperto di licenze software e refactoring. "
-        f"Il seguente codice è attualmente sotto licenza '{detected_license}', che è incompatibile con la licenza principale del progetto '{main_license}'.\n"
-        f"Il tuo compito è ricercare un componente in modo che sia funzionalmente equivalente ma rilasciabile sotto una licenza compatibile con '{main_license} tra queste: {licenses}'.\n"
-        f"Se il componente non esiste, rigeneralo da zero mantenendo la stessa funzionalità ma con una licenza compatibile tra queste: {licenses}.\n"
-        f"Assicurati che il codice rigenerato non contenga parti copiate dal codice originale per evitare problemi di licenza.\n\n"
-        f"Ecco il codice originale:\n"
+        f"You are a software licensing and refactoring expert. "
+        f"The following code is currently under the license '{detected_license}', which is incompatible with the project's main license '{main_license}'.\n"
+        f"Your task is to find a component that is functionally equivalent but can be released under a license compatible with '{main_license}' among these: {licenses}.\n"
+        f"If the component does not exist, regenerate it from scratch while maintaining the same functionality but ensuring it is under a license compatible with one of these: {licenses}.\n"
+        f"Ensure that the regenerated code does not contain parts copied from the original code to avoid licensing issues.\n\n"
+        f"Here is the original code:\n"
         f"```\n{code_content}\n```\n\n"
-        f"Restituisci SOLO il codice rigenerato, senza markdown (```) e senza spiegazioni verbali extra. Il codice deve essere pronto per essere salvato su file."
+        f"Return ONLY the regenerated code, without markdown (```) and without extra verbal explanations. The code must be ready to be saved to a file."
     )
     try:
         response = call_ollama_qwen3_coder(prompt)
@@ -48,9 +48,9 @@ def regenerate_code(
         # Clean up the response to remove markdown formatting if present
         clean_response = response.strip()
         if clean_response.startswith("```"):
-            # Remove the first line (```)
+            # Remove the first line (```python or similar)
             clean_response = clean_response.split("\n", 1)[1]
-            # Removes the last line if it ends with ```
+            # Remove the last line (```)
             if clean_response.endswith("```"):
                 clean_response = clean_response.rsplit("\n", 1)[0]
 

@@ -16,7 +16,7 @@ def filter_licenses(scancode_data: dict, main_spdx: str, path: str) -> dict:
     to validate the 'matched_text' against known license patterns.
     """
     minimal = build_minimal_json(scancode_data)
-    # print(json.dumps(minimal, indent=4))
+    #print(json.dumps(minimal, indent=4))
     scan_clean = remove_main_license(main_spdx, path, minimal)
 
     if main_spdx != "UNKNOWN":
@@ -24,9 +24,9 @@ def filter_licenses(scancode_data: dict, main_spdx: str, path: str) -> dict:
     else:
         regex_filtered = regex_filter(scan_clean, detected_main_spdx=False)
 
-    #post_regex_cleaning = remove_mainspdx_from_filespdx(regex_filtered, main_spdx)
-    #return post_regex_cleaning
-    return regex_filtered
+    uniques = check_license_spdx_duplicates(regex_filtered)
+
+    return uniques
 
 def build_minimal_json(scancode_data: dict) -> dict:
     """
@@ -49,7 +49,7 @@ def build_minimal_json(scancode_data: dict) -> dict:
         # ScanCode file-level detections
         for det in file_entry.get("license_detections", []):
 
-            # 'matches' contiene i dettagli (start_line, end_line, matched_text)
+            # 'matches' contains details (start_line, end_line, matched_text)
             for match in det.get("matches", []):
 
                 if match.get("from_file") == path and "LicenseRef" not in match.get("license_expression_spdx"):
@@ -71,7 +71,7 @@ def build_minimal_json(scancode_data: dict) -> dict:
             })
 
 
-    # Assicura che la cartella esista e scrive il JSON minimale invece di leggerlo
+    # Ensures the folder exists and writes the minimal JSON instead of reading it
     os.makedirs(MINIMAL_JSON_BASE_DIR, exist_ok=True)
     output_minimal = os.path.join(MINIMAL_JSON_BASE_DIR, "minimal_output.json")
 
@@ -82,8 +82,8 @@ def build_minimal_json(scancode_data: dict) -> dict:
 
 def remove_main_license(main_spdx, path, scancode_data) -> dict:
     """
-    Rimuove la licenza principale dal JSON di ScanCode,
-    per evitare che il LLM le consideri.
+    Removes the main license from the ScanCode JSON,
+    to prevent the LLM from considering it.
     """
     for file_entry in scancode_data.get("files", []):
         for det in file_entry.get("matches", []):
@@ -97,49 +97,49 @@ def remove_main_license(main_spdx, path, scancode_data) -> dict:
 
 def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
     """
-    Filtra i risultati di Scancode usando regole caricate da un file JSON esterno.
+    Filters ScanCode results using rules loaded from an external JSON file.
     """
 
-    # --- 1. CARICAMENTO E COMPILAZIONE REGOLE ---
+    # --- 1. LOADING AND COMPILING RULES ---
 
     rules_path = os.path.join(os.path.dirname(__file__), 'license_rules.json')
 
     if not os.path.exists(rules_path):
-        raise FileNotFoundError(f"Impossibile trovare il file di regole: {rules_path}")
+        raise FileNotFoundError(f"Unable to find the rules file: {rules_path}")
 
     with open(rules_path, 'r', encoding='utf-8') as f:
         rules = json.load(f)
 
-    # Compiliamo le liste di esclusione in un'unica regex ottimizzata con OR logic (|)
-    # Questo è molto più veloce di fare un loop su ogni stringa.
+    # Compile exclusion lists into a single optimized regex with OR logic (|)
+    # This is much faster than looping over each string.
     re_references = re.compile("|".join(rules.get("ignore_patterns", [])), re.IGNORECASE)
     re_docs_changelog = re.compile("|".join(rules.get("changelog_patterns", [])), re.IGNORECASE)
 
-    # Compiliamo la regex per il tag SPDX
+    # Compile the regex for the SPDX tag
     re_spdx_tag = re.compile(rules.get("spdx_tag_pattern", ""), re.IGNORECASE)
 
-    # Compiliamo i pattern per riconoscere TESTO LEGALE EFFETTIVO delle licenze
+    # Compile patterns to recognize ACTUAL LEGAL TEXT of licenses
     valid_license_patterns = []
     for pattern in rules.get("valid_license_text_patterns", []):
         try:
             valid_license_patterns.append(re.compile(pattern, re.IGNORECASE))
         except re.error:
-            pass  # Skip pattern non validi
+            pass  # Skip invalid patterns
 
-    # Compiliamo i pattern per riconoscere LINK VALIDI a licenze (RST, Markdown, URL)
+    # Compile patterns to recognize VALID LINKS to licenses (RST, Markdown, URL)
     valid_link_patterns = []
     for pattern in rules.get("valid_license_link_patterns", []):
         try:
             valid_link_patterns.append(re.compile(pattern, re.IGNORECASE))
         except re.error:
-            pass  # Skip pattern non validi
+            pass  # Skip invalid patterns
 
-    # Lunghezza minima del testo
+    # Minimum text length
     min_text_length = rules.get("min_matched_text_length", 20)
 
     filtered_files = {"files": []}
 
-    # --- 2. ELABORAZIONE ---
+    # --- 2. PROCESSING ---
 
     files = data.get('files', [])
 
@@ -167,19 +167,19 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
             spdx = match.get('license_spdx', '')
 
             # -----------------------------------------------------------------
-            # 1. VALIDAZIONE POSITIVA (WHITELIST) - La facciamo PRIMA!
+            # 1. POSITIVE VALIDATION (WHITELIST) - Done FIRST!
             # -----------------------------------------------------------------
 
             is_valid_declaration = False
             match_source = None
 
-            # A. Controllo Tag SPDX Esplicito (Priorità Massima)
+            # A. Explicit SPDX Tag Check (Highest Priority)
             spdx_tag_hit = re_spdx_tag.search(matched_text)
             if spdx_tag_hit:
                 is_valid_declaration = True
                 match_source = "SPDX-TAG"
 
-            # B. Controllo Testo Legale Boilerplate (Es. "Permission hereby granted...")
+            # B. Boilerplate Legal Text Check (e.g., "Permission hereby granted...")
             elif not is_valid_declaration:
                 for pattern_re in valid_license_patterns:
                     if pattern_re.search(matched_text):
@@ -187,7 +187,7 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
                         match_source = "LEGAL-TEXT"
                         break
 
-            # C. Controllo Link Validi (Es. link a file LICENSE o URL gnu.org)
+            # C. Valid Link Check (e.g., links to LICENSE files or gnu.org URLs)
             is_valid_license_link = False
             if not is_valid_declaration:
                 for pattern_re in valid_link_patterns:
@@ -198,55 +198,54 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
                         break
 
             # -----------------------------------------------------------------
-            # 2. FILTRO NEGATIVO (BLACKLIST) - Solo se non è già validato
+            # 2. NEGATIVE FILTERING (BLACKLIST) - Only if not already validated
             # -----------------------------------------------------------------
 
-            # Se il testo è GIA' riconosciuto come valido (es. License :: OSI Approved),
-            # SALTIAMO i controlli di ignoranza.
+            # If the text is ALREADY recognized as valid (e.g., License :: OSI Approved),
+            # SKIP the ignore checks.
             if not is_valid_declaration:
 
-                # Lunghezza minima
+                # Minimum length
                 if len(matched_text) < min_text_length:
                     continue
 
-                # Scarta Riferimenti/Link generici
-                # Qui è dove "License ::" veniva ucciso dal regex "^license:"
+                # Discard generic references/links
                 if len(matched_text) < 300:
                     if re_references.search(matched_text):
                         continue
 
-                # Scarta Linguaggio da Changelog
+                # Discard Changelog Language
                 if re_docs_changelog.search(matched_text):
                     continue
 
             # -----------------------------------------------------------------
-            # 3. FILTRO FINALE ("Zero Trust")
+            # 3. FINAL FILTER ("Zero Trust")
             # -----------------------------------------------------------------
 
-            # Se dopo tutto questo non è una dichiarazione valida, scarta.
+            # If after all this it is not a valid declaration, discard it.
             if not is_valid_declaration:
                 continue
 
-                # -----------------------------------------------------------------
-            # 4. ASSEGNAZIONE ID SPDX FINALE
+            # -----------------------------------------------------------------
+            # 4. FINAL SPDX ID ASSIGNMENT
             # -----------------------------------------------------------------
 
             final_spdx = None
 
-            # Verifica validità formale ID Scancode
+            # Check formal validity of Scancode ID
             scancode_id_ok = False
             if spdx and "unknown" not in spdx.lower() and "scancode" not in spdx.lower():
                 scancode_id_ok = True
 
-            # Caso 1: Tag SPDX Esplicito
+            # Case 1: Explicit SPDX Tag
             if spdx_tag_hit:
                 final_spdx = spdx_tag_hit.group(1) or spdx_tag_hit.group(3)
 
-            # Caso 2: Scancode ID valido
+            # Case 2: Valid Scancode ID
             if not final_spdx and scancode_id_ok:
                 final_spdx = spdx
 
-            # Caso 3: Fallback
+            # Case 3: Fallback
             if not final_spdx:
                 final_spdx = "LicenseRef-scancode-unknown"
 
@@ -256,7 +255,7 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
                     "matched_text": matched_text
                 })
 
-        # Salvataggio se ci sono match validi e score sufficiente
+        # Save if there are valid matches and sufficient score
         if valid_matches:
             filtered_files["files"].append({
                 "path": file_path,
@@ -266,8 +265,8 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
 
 
     # --- 3. OUTPUT FILE ---
-    # Definisci MINIMAL_JSON_BASE_DIR nel tuo codice globale o passalo come argomento se serve
-    # Qui assumo esista nel contesto o uso una default locale
+    # Define MINIMAL_JSON_BASE_DIR in your global code or pass it as an argument if needed
+    # Here I assume it exists in the context or use a local default
     base_dir = globals().get('MINIMAL_JSON_BASE_DIR', './output')
     os.makedirs(base_dir, exist_ok=True)
     output_minimal = os.path.join(base_dir, "filtered_output.json")
@@ -276,4 +275,85 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
         json.dump(filtered_files, f, indent=4, ensure_ascii=False)
 
     return filtered_files
+
+def check_license_spdx_duplicates(licenses: dict) -> dict:
+    """
+    Controlla se ci sono duplicati di licenze SPDX nel JSON di ScanCode.
+    Ritorna il dizionario delle licenze senza duplicati.
+    """
+    uniques = {"files": []}
+
+    for file_entry in licenses.get("files", []):
+        seen_spdx = set()
+        spdx_counts = []
+
+        for match in file_entry.get("matches", []):
+            raw_spdx = match.get("license_spdx")
+
+            if not raw_spdx:
+                continue
+
+            # Normalizza per il confronto (strip e lower)
+            spdx_clean = str(raw_spdx).strip()
+            spdx_key = spdx_clean.lower()
+
+            if spdx_key not in seen_spdx:
+                seen_spdx.add(spdx_key)
+                spdx_counts.append({
+                    "license_spdx": spdx_clean,
+                    "matched_text": match.get("matched_text")
+                })
+
+        spdx_uniques = filter_contained_licenses(spdx_counts)
+
+        if spdx_uniques:
+            uniques["files"].append({
+                "path": file_entry.get("path"),
+                "matches": spdx_uniques,
+                "score": file_entry.get("score")
+            })
+
+    return uniques
+
+def filter_contained_licenses(spdx_items: list[dict]) -> list[dict]:
+    """
+    Rimuove un elemento dalla lista se il suo 'license_spdx' è contenuto
+    interamente nel 'license_spdx' di un altro elemento.
+
+    Esempio: Se ho [{'license_spdx': 'MIT'}, {'license_spdx': 'Apache-2.0 AND MIT'}],
+    rimuove l'elemento che contiene solo 'MIT'.
+    """
+    n = len(spdx_items)
+    to_remove = set()
+
+    for i in range(n):
+        # Otteniamo la licenza dell'elemento corrente (il candidato ad essere rimosso)
+        item_i = spdx_items[i]
+        spdx_i = str(item_i.get("license_spdx", "")).strip()
+
+        # Se la stringa è vuota o l'abbiamo già marcata per la rimozione, saltiamo
+        if not spdx_i or i in to_remove:
+            continue
+
+        for j in range(n):
+            if i == j:
+                continue
+
+            # Otteniamo la licenza dell'elemento di confronto (il contenitore)
+            item_j = spdx_items[j]
+            spdx_j = str(item_j.get("license_spdx", "")).strip()
+
+            # Logica: Se spdx_i è più corto di spdx_j, controlliamo se è contenuto dentro
+            if len(spdx_i) < len(spdx_j):
+                # Regex boundary: assicura che matchiamo "MIT" ma non "LIMIT" o "SMITH"
+                # (?<!...) è un negative lookbehind, (?!...) è un negative lookahead
+                # Includiamo ., - e alfanumerici nei boundary per gestire versioni (es. GPL-3.0)
+                pattern = r"(?<![a-zA-Z0-9.\-])" + re.escape(spdx_i) + r"(?![a-zA-Z0-9.\-])"
+
+                if re.search(pattern, spdx_j, re.IGNORECASE):
+                    to_remove.add(i)
+                    break # Abbiamo trovato un contenitore, inutile controllare altri j
+
+    # Ritorna la lista filtrata
+    return [item for k, item in enumerate(spdx_items) if k not in to_remove]
 
