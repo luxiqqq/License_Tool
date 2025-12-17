@@ -1,4 +1,4 @@
-# tests/services/scanner/test_main_spdx_utilities.py
+# tests/services/scanner/test_main_spdx_utilities_unit.py
 import pytest
 
 from app.services.scanner import main_spdx_utilities as util
