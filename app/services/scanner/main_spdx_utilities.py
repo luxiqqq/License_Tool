@@ -47,6 +47,9 @@ def _pick_best_spdx(entries: List[Dict[str, Any]]) -> Optional[Tuple[str, str]]:
     if not entries:
         return None
 
+    # Filtra solo le entry che sono dizionari
+    entries = [e for e in entries if isinstance(e, dict)]
+
     # Ordina: usa la profondità del path (conteggio degli "/") come chiave
     # Più basso è il conteggio, più vicino è alla root.
     sorted_entries = sorted(entries, key=lambda e: (e.get("path", "") or "").count("/"))
@@ -58,4 +61,3 @@ def _pick_best_spdx(entries: List[Dict[str, Any]]) -> Optional[Tuple[str, str]]:
             return res
 
     return None
-
