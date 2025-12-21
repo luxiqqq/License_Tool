@@ -66,9 +66,10 @@ pythonpath = "."
 [tool.pylint.main]
 # Cambia source-roots per puntare alla root del progetto
 source-roots = ["."]
-
 # Aggiungi questo hook per forzare l'inclusione della directory corrente
 init-hook = "import sys; sys.path.append('.')"
+# Per ora ignoro i test perché non sono ancora stati fattorizzati come si deve
+ignore = ["tests"]
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = ["all"]
