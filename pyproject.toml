@@ -64,7 +64,11 @@ pythonpath = "."
 
 # --- Configurazione Static Analysis ---
 [tool.pylint.main]
-source-roots = ["app"]
+# Cambia source-roots per puntare alla root del progetto
+source-roots = ["."]
+
+# Aggiungi questo hook per forzare l'inclusione della directory corrente
+init-hook = "import sys; sys.path.append('.')"
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = ["all"]
