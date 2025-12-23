@@ -280,7 +280,7 @@ const Callback = () => {
     const displayData = regeneratedData || analysisData;
     const isComparisonMode = !!regeneratedData;
 
-    return (
+     return (
         <div className="container" style={{ justifyContent: 'flex-start', paddingTop: '2rem' }}>
             <div className="glass-panel result-card">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -288,30 +288,32 @@ const Callback = () => {
                         <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} /> Back
                     </button>
                     <h2>Analysis Report {isComparisonMode ? '(Regenerated)' : ''}</h2>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        {displayData.issues.some(i =>
-                            !i.compatible &&
-                            !/(\.(md|txt|rst)|THIRD_PARTY_NOTICE|NOTICE)$/i.test(i.file_path)) && (
-                            <button onClick={handleRegenerate} className="glass-button" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', background: 'rgba(100, 108, 255, 0.2)' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <RefreshCw size={16} /> Regenerate
-                                </span>
-                            </button>
-                        )}
-                        <button onClick={handleDownload} className="glass-button" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                        <button onClick={handleDownload} className="glass-button" style={{ padding: '0.6rem 1rem', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Download size={16} /> Download
                             </span>
                         </button>
+                        {displayData.issues.some(i =>
+                            !i.compatible &&
+                            !/(\.(md|txt|rst)|THIRD_PARTY_NOTICE|NOTICE)$/i.test(i.file_path)) && (
+                                <button onClick={handleRegenerate} className="glass-button" style={{ padding: '0.6rem 1rem', fontSize: '0.9rem', background: 'rgba(100, 108, 255, 0.2)', width: '100%', justifyContent: 'center' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <RefreshCw size={16} /> Regenerate
+                                    </span>
+                                </button>
+                            )}
                     </div>
                 </div>
+
 
                 {isRegenerating && (
                     <div className="glass-panel" style={{
                         marginBottom: '2rem',
                         background: 'rgba(100, 108, 255, 0.1)',
                         borderColor: '#646cff',
-                        display: 'flex', alignItems: 'center', gap: '1rem'
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        padding: '0.7rem',
                     }}>
                         <div className="spin" style={{ width: 24, height: 24, marginLeft: '1.3rem' }} />
                         <div>
@@ -328,7 +330,7 @@ const Callback = () => {
                     <div style={{ textAlign: 'left' }}>
                         {/* Header Info */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', background:'rgba(21, 28, 51, 0.18)' }}>
+                            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(21, 28, 51, 0.18)' }}>
                                 <span style={{ opacity: 0.7, fontSize: '1rem' }}>Repository</span>
                                 <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{displayData.repository}</span>
                             </div>
