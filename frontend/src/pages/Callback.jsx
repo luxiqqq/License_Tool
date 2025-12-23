@@ -89,9 +89,9 @@ const Callback = () => {
             clearInterval(interval);
 
             // Check if license suggestion is needed
-            if (response.data.needs_license_suggestion) {
-                setShowLicenseSuggestionForm(true);
-            }
+            // REMOVED AUTO OPEN: if (response.data.needs_license_suggestion) {
+            //     setShowLicenseSuggestionForm(true);
+            // }
 
             // Check for regeneration needs immediately after analysis
             // REMOVED AUTO REGENERATION: checkAndRegenerate(response.data, cloneData.owner, cloneData.repo);

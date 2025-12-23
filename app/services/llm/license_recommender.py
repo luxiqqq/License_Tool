@@ -172,12 +172,12 @@ def needs_license_suggestion(main_license: str, issues: List[Dict]) -> bool:
     # Case 1: No main license detected
     if not main_license or main_license.lower() in ["unknown", "none", "no license"]:
         return True
-
+    """
     # Case 2: Check for unknown licenses in files
     for issue in issues:
         detected = issue.get("detected_license", "").lower()
         if "unknown" in detected or detected in ["none", ""]:
             return True
-
+    """
     return False
 
