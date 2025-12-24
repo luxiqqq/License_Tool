@@ -272,6 +272,7 @@ const Callback = () => {
                     <h2>Analysis Report {isComparisonMode ? '(Regenerated)' : ''}</h2>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         {displayData.issues.some(i =>
+                            displayData.main_license !== 'UNKNOWN' &&
                             !i.compatible &&
                             !/(\.(md|txt|rst)|THIRD_PARTY_NOTICE|NOTICE)$/i.test(i.file_path)) && (
                             <button onClick={handleRegenerate} className="glass-button" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', background: 'rgba(100, 108, 255, 0.2)' }}>
