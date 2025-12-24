@@ -1,3 +1,14 @@
+# ==============================================================================
+# TEST SCENARIOS: MIXED LICENSES AND EDGE CASE COVERAGE
+# ==============================================================================
+# This module verifies the robustness of the detection algorithm when
+# encountering real-world repositories, which often feature:
+# 1. Declared root-level licenses (Main License).
+# 2. Divergent licenses in sub-files (File-level overrides).
+# 3. Unidentifiable files (Explicitly marked as UNKNOWN).
+# 4. Binary assets or files without legal metadata (None/Empty).
+# ==============================================================================
+
 import pytest
 from app.services.scanner.detection import (
     detect_main_license_scancode,
@@ -6,34 +17,38 @@ from app.services.scanner.detection import (
 
 def test_detect_main_license_with_unknown_files():
     """
-    Scenario:
-    1. Il repository ha un file LICENSE chiaro (MIT).
-    2. Il repository contiene file sorgente validi (Apache-2.0).
-    3. Il repository contiene file con licenza sconosciuta (UNKNOWN).
+    Scenario: Analyzing a repository with conflicting license signals.
 
-    Obiettivo: Verificare che la main license sia rilevata correttamente
-    e che i file UNKNOWN vengano estratti e identificati come tali.
+    Mock Components:
+    - Root: 'LICENSE' file identified as MIT (Score 100).
+    - Source: 'src/utils.py' identified as Apache-2.0.
+    - Legacy: 'script.sh' explicitly flagged as UNKNOWN by the scanner.
+    - Assets: Image file with no detected license matches.
+
+    Objective:
+    Ensure 'detect_main_license' prioritizes the root file and that
+    'extract_file_licenses' correctly maps problematic files.
     """
 
-    # Simuliamo l'output JSON grezzo che arriverebbe da ScanCode
+    # Simulated raw JSON output from the ScanCode tool
     mock_scancode_output = {
         "files": [
-            # 1. Il file di licenza principale (Root)
+            # 1. MAIN LICENSE CANDIDATE: Standard license file in the root
             {
                 "path": "LICENSE",
                 "type": "file",
-                # Usato da detect_main_license_scancode (spesso guarda 'licenses' o 'detected_...')
+                # Used by detect_main_license_scancode (it often looks at “licenses” or “detected_…”)
                 "detected_license_expression_spdx": "MIT",
                 "licenses": [
                     {"spdx_license_key": "MIT", "score": 100.0}
                 ],
-                # Usato da extract_file_licenses (guarda 'matches')
+                # Used by extract_file_licenses (it looks at “matches”)
                 "matches": [
                     {"license_spdx": "MIT", "score": 100.0}
                 ]
             },
 
-            # 2. Un file sorgente con licenza valida
+            # 2. FILE-LEVEL LICENSE: Source file with a different valid licens
             {
                 "path": "src/utils.py",
                 "type": "file",
@@ -44,7 +59,7 @@ def test_detect_main_license_with_unknown_files():
                 ]
             },
 
-            # 3. Un file con licenza esplicitamente UNKNOWN o non rilevata
+            # 3. UNKNOWN FILE: ScanCode identifies a license presence but cannot classify it
             {
                 "path": "legacy/script.sh",
                 "type": "file",
@@ -55,7 +70,7 @@ def test_detect_main_license_with_unknown_files():
                 ]
             },
 
-            # 4. Un file senza match (che potrebbe essere interpretato come assenza di licenza)
+            # 4. UNLICENSED FILE: Binary asset or file without legal metadata
             {
                 "path": "assets/image.png",
                 "type": "file",
@@ -66,7 +81,8 @@ def test_detect_main_license_with_unknown_files():
         ]
     }
 
-    # --- TEST 1: Rilevamento Main License ---
+    # --- PHASE 1: Main License Detection Verification ---
+    # The logic must ignore sub-file licenses and select the root LICENSE file
     main_license, license_path = detect_main_license_scancode(mock_scancode_output)
 
     print(f"\nMain License rilevata: {main_license} (su {license_path})")
@@ -74,30 +90,34 @@ def test_detect_main_license_with_unknown_files():
     assert main_license == "MIT", "La main license dovrebbe essere MIT"
     assert license_path == "LICENSE", "Il file della main license dovrebbe essere LICENSE"
 
-    # --- TEST 2: Estrazione Licenze dei File (inclusi UNKNOWN) ---
+    # --- PHASE 2: Granular File Analysis Verification ---
+    # The function must map every file to its specific license, including UNKNOWNs
     files_analysis = extract_file_licenses(mock_scancode_output)
 
     print("Licenze file estratte:", files_analysis)
 
-    # Verifica file valido
+    # Verify correct mapping for valid source files
     assert "src/utils.py" in files_analysis
     assert files_analysis["src/utils.py"] == "Apache-2.0"
 
-    # Verifica file UNKNOWN
-    # Nota: Assumiamo che la tua logica in extract_file_licenses includa anche 'UNKNOWN'
-    # se presente nei matches.
+    # Verify handling of UNKNOWN files
+    # It is vital that UNKNOWN is not converted to None, so as to alert the user or the LLM
     assert "legacy/script.sh" in files_analysis
     assert files_analysis["legacy/script.sh"] == "UNKNOWN", "Il file script.sh dovrebbe essere rilevato come UNKNOWN"
 
-    # Verifica file senza match (di solito non appare nel dizionario o è None)
-    # Basandoci sui tuoi test precedenti, se matches è vuoto, la chiave non viene creata.
+    # Verify asset filtering
+    # Files with no matches should not bloat the results dictionary
     assert "assets/image.png" not in files_analysis
 
 def test_detect_main_license_fallback_unknown():
     """
-    Scenario: Nessun file di licenza chiaro è presente.
-    La main license dovrebbe risultare UNKNOWN.
-    """
+     Scenario: Repository without any root-level license file (Undocumented Repo).
+
+     Objective:
+     Test the fallback behavior. If no 'LICENSE' file exists, the algorithm
+     must decide whether to promote a source license or return UNKNOWN.
+     """
+
     mock_scancode_output_bad = {
         "files": [
             {
@@ -107,20 +127,20 @@ def test_detect_main_license_fallback_unknown():
         ]
     }
 
-    # Qui mockiamo il comportamento interno se necessario, ma testiamo
-    # se detect_main_license restituisce UNKNOWN quando non trova un candidato forte.
-    # (Dipende dalla logica di _pick_best_spdx nel tuo codice reale)
+    # Here we mock the internal behavior if necessary, but we test
+    # whether detect_main_license returns UNKNOWN when it does not find a strong candidate.
+    # (This depends on the logic of _pick_best_spdx in your actual code.)
 
     result = detect_main_license_scancode(mock_scancode_output_bad)
 
-    # Se la tua logica prevede che senza un file LICENSE alla root torni UNKNOWN:
+    # If your logic expects that, without a LICENSE file at the root, it returns UNKNOWN:
     # assert result == "UNKNOWN"
-    # Oppure se prende la licenza del primo file:
+    # Or, if it takes the license from the first file:
     # assert result == ("GPL-3.0", "src/main.c")
 
-    # Basandomi sul tuo test esistente 'test_detect_fallback_unknown' in test_detection_unit.py:
+    # Based on your existing test test_detect_fallback_unknown in test_detection_unit.py:
     if result == "UNKNOWN":
         assert True
     else:
-        # Se restituisce una tupla, verifichiamo che sia coerente
+        # If it returns a tuple, we verify that it is consistent.
         pass
