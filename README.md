@@ -28,7 +28,7 @@ License_Tool/
 ├── pyproject.toml          # Metadata del progetto e configurazione build system
 ├── requirements.txt        # Elenco dipendenze Python per installazione rapida
 ├── LICENSE                 # Testo della Licenza MIT del progetto
-└── THRID_PARTY_NOTICE       # Documentazione obbligatoria per componenti di terze parti
+└── THIRD_PARTY_NOTICE      # Documentazione obbligatoria per componenti di terze parti
 ```
 
 ## 🚀 Panoramica del Sistema
