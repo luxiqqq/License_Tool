@@ -603,6 +603,7 @@ def mock_scancode_and_llm():
     - Primary License Detection (detect_main_license_scancode)
     - Data Filtering (filter_licenses)
     - AI-based Extraction (extract_file_licenses)
+    - License Ranking (choose_most_permissive_license_in_file)
     - Compatibility Engine (check_compatibility)
     - AI Suggestion Engine (enrich_with_llm_suggestions)
     """
@@ -610,6 +611,7 @@ def mock_scancode_and_llm():
             patch('app.services.analysis_workflow.detect_main_license_scancode') as mock_detect, \
             patch('app.services.analysis_workflow.filter_licenses') as mock_filter, \
             patch('app.services.analysis_workflow.extract_file_licenses') as mock_extract, \
+            patch('app.services.analysis_workflow.choose_most_permissive_license_in_file') as mock_ranking, \
             patch('app.services.analysis_workflow.check_compatibility') as mock_compat, \
             patch('app.services.analysis_workflow.enrich_with_llm_suggestions') as mock_enrich:
 
@@ -633,11 +635,17 @@ def mock_scancode_and_llm():
         # Mock filtered data
         mock_filter.return_value = mock_scancode.return_value
 
-        # Mock extracted licenses
-        mock_extract.return_value = [
-            {'file_path': 'README.md', 'license': 'MIT'},
-            {'file_path': 'src/main.py', 'license': 'MIT'}
-        ]
+        # Mock extracted licenses (Dict[str, str] format: path -> license)
+        mock_extract.return_value = {
+            'README.md': 'MIT',
+            'src/main.py': 'MIT'
+        }
+
+        # Mock license ranking (returns same dict after processing OR clauses)
+        mock_ranking.return_value = {
+            'README.md': 'MIT',
+            'src/main.py': 'MIT'
+        }
 
         # Mock compatibility check (no issues)
         mock_compat.return_value = {'issues': []}
@@ -650,6 +658,7 @@ def mock_scancode_and_llm():
             'detect': mock_detect,
             'filter': mock_filter,
             'extract': mock_extract,
+            'ranking': mock_ranking,
             'compat': mock_compat,
             'enrich': mock_enrich
         }
@@ -706,6 +715,7 @@ def test_run_analysis_with_incompatible_licenses(sample_zip_file, cleanup_test_r
             patch('app.services.analysis_workflow.detect_main_license_scancode') as mock_detect, \
             patch('app.services.analysis_workflow.filter_licenses') as mock_filter, \
             patch('app.services.analysis_workflow.extract_file_licenses') as mock_extract, \
+            patch('app.services.analysis_workflow.choose_most_permissive_license_in_file') as mock_ranking, \
             patch('app.services.analysis_workflow.check_compatibility') as mock_compat, \
             patch('app.services.analysis_workflow.enrich_with_llm_suggestions') as mock_enrich:
 
@@ -713,9 +723,14 @@ def test_run_analysis_with_incompatible_licenses(sample_zip_file, cleanup_test_r
         mock_scancode.return_value = {'files': []}
         mock_detect.return_value = ('MIT', 'LICENSE')
         mock_filter.return_value = mock_scancode.return_value
-        mock_extract.return_value = [
-            {'file_path': 'src/gpl_code.py', 'license': 'GPL-3.0'}
-        ]
+        # Mock extracted licenses (Dict[str, str] format: path -> license)
+        mock_extract.return_value = {
+            'src/gpl_code.py': 'GPL-3.0'
+        }
+        # Mock license ranking (returns same dict)
+        mock_ranking.return_value = {
+            'src/gpl_code.py': 'GPL-3.0'
+        }
 
         # Mock incompatibility
         mock_compat.return_value = {
