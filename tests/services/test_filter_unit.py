@@ -4,7 +4,7 @@ import os
 import re
 from unittest.mock import patch, mock_open
 
-# Importa le funzioni da testare
+# Import functions to be tested
 from app.services.scanner.filter import (
     filter_licenses,
     build_minimal_json,
@@ -19,17 +19,17 @@ from app.services.scanner.filter import (
 @pytest.fixture(autouse=True)
 def setup_filter_test_env():
     """
-    Configura l'ambiente per tutti i test.
-    Patchezza MINIMAL_JSON_BASE_DIR direttamente nel modulo scanner.filter
+    Configures the environment for all tests.
+    Patches MINIMAL_JSON_BASE_DIR directly in the scanner.filter module.
     """
-    # Questo patch funziona solo se MINIMAL_JSON_BASE_DIR è importato correttamente in filter.py
+    # This patch only works if MINIMAL_JSON_BASE_DIR is imported correctly in filter.py
     with patch("app.services.scanner.filter.MINIMAL_JSON_BASE_DIR", "/mock/dir"), \
             patch("os.makedirs"):
         yield
 
 @pytest.fixture
 def mock_scancode_data():
-    """Dati di esempio grezzi da Scancode."""
+    """Raw sample data from Scancode."""
     return {
         "files": [
             {
@@ -76,7 +76,7 @@ def mock_scancode_data():
 
 @pytest.fixture
 def mock_rules_json():
-    """Contenuto simulato di license_rules.json."""
+    """Simulated content of license_rules.json."""
     return {
         "ignore_patterns": [
             "(see\\s+(the\\s+)?license\\s+file)",
@@ -96,15 +96,15 @@ def mock_rules_json():
         "min_matched_text_length": 10
     }
 
-# --- TEST UNITARI: build_minimal_json ---
+# --- UNIT TESTS: build_minimal_json ---
 
 def test_build_minimal_json(mock_scancode_data):
-    """Testa la creazione standard del JSON minimale."""
+    """Tests standard minimal JSON creation."""
     with patch("builtins.open", mock_open()) as mocked_file, \
             patch("os.makedirs") as mock_makedirs:
         result = build_minimal_json(mock_scancode_data)
 
-        # Verifica path fittizio patchato dalla fixture
+        # Verify dummy path patched by fixture
         mock_makedirs.assert_called_with("/mock/dir", exist_ok=True)
 
         files = result["files"]
@@ -115,7 +115,7 @@ def test_build_minimal_json(mock_scancode_data):
         assert f1["matches"][0]["license_spdx"] == "MIT"
 
 def test_build_minimal_json_edge_cases():
-    """Testa casi limite: path mancante e mismatch from_file."""
+    """Tests edge cases: missing path and from_file mismatch."""
     data = {
         "files": [
             {"path": None},
@@ -137,7 +137,7 @@ def test_build_minimal_json_edge_cases():
         res = build_minimal_json(data)
         assert len(res["files"]) == 0
 
-# --- TEST UNITARI: remove_main_license ---
+# --- UNIT TESTS: remove_main_license ---
 
 def test_remove_main_license_single():
     data = {
@@ -165,7 +165,7 @@ def test_remove_main_license_multiple_matches_value_error():
     result = remove_main_license("MIT", "target.py", data)
     assert len(result["files"]) == 0
 
-# --- TEST UNITARI: filter_contained_licenses ---
+# --- UNIT TESTS: filter_contained_licenses ---
 
 def test_filter_contained_licenses_logic():
     items = [
@@ -185,7 +185,7 @@ def test_filter_contained_licenses_dirty_inputs():
     res = filter_contained_licenses(items)
     assert len(res) == 3
 
-# --- TEST UNITARI: regex_filter ---
+# --- UNIT TESTS: regex_filter ---
 
 def test_regex_filter_missing_rules_file():
     with patch("os.path.exists", return_value=False):
@@ -263,7 +263,7 @@ def test_regex_filter_scancode_id_checks(mock_rules_json):
         assert matches[1]["license_spdx"] == "LicenseRef-scancode-unknown"
         assert matches[2]["license_spdx"] == "Apache-2.0"
 
-# --- TEST UNITARI: check_license_spdx_duplicates ---
+# --- UNIT TESTS: check_license_spdx_duplicates ---
 
 def test_check_license_spdx_duplicates_dirty_data():
     data = {
@@ -296,7 +296,7 @@ def test_check_license_spdx_duplicates_deduplication():
     result = check_license_spdx_duplicates(data)
     assert len(result["files"][0]["matches"]) == 1
 
-# --- TEST DI INTEGRAZIONE ---
+# --- INTEGRATION TESTS ---
 
 def test_filter_licenses_integration(mock_scancode_data, mock_rules_json):
     with patch("builtins.open", mock_open(read_data=json.dumps(mock_rules_json))), \
