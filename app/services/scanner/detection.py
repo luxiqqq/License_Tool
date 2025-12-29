@@ -14,10 +14,9 @@ import os
 import json
 import logging
 import subprocess
-from typing import Dict, Tuple, Union, List, Any
+from typing import Dict, List, Any
 
 from app.utility.config import SCANCODE_BIN, OUTPUT_BASE_DIR
-from app.services.scanner.main_spdx_utilities import _pick_best_spdx
 
 logger = logging.getLogger(__name__)
 
