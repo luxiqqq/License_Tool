@@ -29,6 +29,7 @@ dependencies = [
     "license-expression",
     "httpx~=0.28.1",
     "python-multipart~=0.0.20",
+    "license-expression"
 ]
 
 [project.urls]
