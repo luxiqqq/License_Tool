@@ -116,6 +116,7 @@ Il progetto adotta un approccio ibrido per la gestione delle dipendenze, garante
 ### 2. `requirements.txt` (Deploy Rapido)
 È utilizzato per l'installazione immediata dell'ambiente operativo (es. in CI/CD o sviluppo locale veloce). Include librerie essenziali come:
 * **Core**: `fastapi`, `uvicorn`.
+* **Analisi Legale**: `license-expression` (SPDX).
 
 ## 🔧 Installazione e Avvio
 
