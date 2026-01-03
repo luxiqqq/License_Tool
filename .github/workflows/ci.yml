@@ -1,74 +1,122 @@
+# Nome del workflow visualizzato nella UI di GitHub Actions
 name: Python CI
 
+# Trigger del workflow: quando eseguire questo workflow
 on:
+  # Si attiva su ogni push a qualsiasi branch
   push:
     branches: [ "**" ]
+  # Si attiva su pull request verso il branch main
   pull_request:
     branches: [ "main" ]
 
+# Definizione dei job da eseguire
 jobs:
+  # ========================================
+  # JOB 1: Test Backend
+  # Esegue i test unitari del backend Python
+  # ========================================
   test-backend:
+    # Sistema operativo su cui eseguire il job
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Clona il repository nel runner
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Configura l'ambiente Python
       - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+          # Cache delle dipendenze pip per velocizzare le build successive
           cache: 'pip'
 
+      # Step 3: Installa il progetto e le dipendenze di sviluppo
       - name: Install project and dependencies
         run: |
+          # Aggiorna pip all'ultima versione
           python -m pip install --upgrade pip
+          # Installa il progetto in modalità editable con dipendenze dev
+          # (definite in pyproject.toml sotto [project.optional-dependencies])
           pip install -e .[dev]
 
+      # Step 4: Esegue la suite di test con pytest
       - name: Run Pytest
         run: pytest
 
+  # ========================================
+  # JOB 2: Analisi Statica del Codice
+  # Esegue controlli di qualità del codice con Pylint
+  # ========================================
   static-analysis:
+    # Sistema operativo su cui eseguire il job
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Clona il repository nel runner
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Configura l'ambiente Python
       - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+          # Cache delle dipendenze pip per velocizzare le build successive
           cache: 'pip'
 
+      # Step 3: Installa tutte le dipendenze di sviluppo
       - name: Install dependencies
-        # Install all dev dependencies defined in pyproject.toml
+        # Installa tutte le dipendenze dev definite in pyproject.toml
         run: |
+          # Aggiorna pip all'ultima versione
           python -m pip install --upgrade pip
+          # Installa il progetto in modalità editable con dipendenze dev
           pip install -e .[dev]
 
+      # Step 4: Esegue Pylint per l'analisi statica del codice
       - name: Run Pylint (Errors Only)
-        # --errors-only: Block only on serious errors
+        # --errors-only: Blocca solo su errori gravi, ignora warning e convention
+        # Questo impedisce che il workflow fallisca per problemi minori di stile
         run: pylint app
 
+  # ========================================
+  # JOB 3: Build Frontend
+  # Compila l'applicazione frontend React/Vite
+  # ========================================
   build-frontend:
+    # Sistema operativo su cui eseguire il job
     runs-on: ubuntu-latest
+    # Imposta la directory di lavoro di default per tutti i comandi
     defaults:
       run:
         working-directory: ./frontend
 
     steps:
+      # Step 1: Clona il repository nel runner
       - uses: actions/checkout@v4
 
+      # Step 2: Configura Node.js per il frontend
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
+          # Versione di Node.js da utilizzare
           node-version: '20'
+          # Abilita la cache di npm per velocizzare le build
           cache: 'npm'
+          # Percorso del file package-lock.json per la cache
           cache-dependency-path: frontend/package-lock.json
 
+      # Step 3: Installa le dipendenze npm
       - name: Install Frontend dependencies
+        # npm ci: Installazione pulita e riproducibile basata su package-lock.json
+        # Più veloce e affidabile di npm install per CI/CD
         run: npm ci
 
+      # Step 4: Compila l'applicazione frontend
       - name: Build Frontend
+        # Esegue il comando di build definito in package.json (solitamente Vite)
+        # Verifica che il frontend possa essere compilato senza errori
         run: npm run build

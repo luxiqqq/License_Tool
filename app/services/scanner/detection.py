@@ -23,21 +23,21 @@ logger = logging.getLogger(__name__)
 
 def run_scancode(repo_path: str) -> Dict[str, Any]:
     """
-    Executes ScanCode on a specific repository path.
+    Esegue ScanCode su un percorso specifico del repository.
 
-    It applies advanced filters, tracks progress via logging, and performs
-    post-processing on the output JSON to remove redundant data.
+    Applica filtri avanzati, traccia il progresso tramite logging ed esegue
+    post-elaborazione sull'output JSON per rimuovere dati ridondanti.
 
     Args:
-        repo_path (str): The file system path to the cloned repository.
+        repo_path (str): Il percorso del file system al repository clonato.
 
     Returns:
-        Dict[str, Any]: The parsed and cleaned ScanCode JSON output.
+        Dict[str, Any]: L'output JSON di ScanCode analizzato e pulito.
 
     Raises:
-        RuntimeError: If ScanCode fails (exit code > 1) or does not generate output.
+        RuntimeError: Se ScanCode fallisce (codice di uscita > 1) o non genera output.
     """
-    # 1. Load ignore patterns (prioritize patterns_to_ignore.json, fallback to license_rules.json)
+    # 1. Carica i pattern da ignorare (priorità a patterns_to_ignore.json, fallback a license_rules.json)
     base_dir = os.path.dirname(__file__)
     patterns_path = os.path.join(base_dir, 'patterns_to_ignore.json')
     rules_path = os.path.join(base_dir, 'license_rules.json')
@@ -56,16 +56,16 @@ def run_scancode(repo_path: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         logger.warning("Failed to parse ignore patterns JSON. Proceeding without ignores.")
 
-    # Normalize patterns and remove empty strings
+    # Normalizza i pattern e rimuove le stringhe vuote
     ignore_patterns = [str(x) for x in ignore_patterns if x]
 
-    # Ensure output directory exists
+    # Assicura che la directory di output esista
     os.makedirs(OUTPUT_BASE_DIR, exist_ok=True)
 
     repo_name = os.path.basename(os.path.normpath(repo_path))
     output_file = os.path.join(OUTPUT_BASE_DIR, f"{repo_name}_scancode_output.json")
 
-    # 2. Build the ScanCode command
+    # 2. Costruisce il comando ScanCode
     cmd = [
         SCANCODE_BIN,
         # License Options
@@ -79,7 +79,7 @@ def run_scancode(repo_path: str) -> Dict[str, Any]:
         "--classify",
     ]
 
-    # 3. Add dynamic ignore patterns
+    # 3. Aggiunge pattern di ignore dinamici
     for pattern in ignore_patterns:
         cmd.extend(["--ignore", pattern])
 
@@ -132,20 +132,20 @@ def run_scancode(repo_path: str) -> Dict[str, Any]:
 
 def detect_main_license_scancode(data: Dict[str, Any]) -> Tuple[str, str]:
     """
-    Detects the main license using heuristics based on depth, file type, and ScanCode score.
+    Rileva la licenza principale utilizzando euristiche basate su profondità, tipo di file e punteggio ScanCode.
 
     Args:
-        data (Dict[str, Any]): The parsed ScanCode JSON output.
+        data (Dict[str, Any]): L'output JSON analizzato di ScanCode.
 
     Returns:
-        Tuple[str, str]: A tuple containing the main license SPDX expression and the path of the file where it was detected.
-        Returns ("UNKNOWN", None) if no valid license is found.
+        Tuple[str, str]: Una tupla contenente l'espressione SPDX della licenza principale e il percorso del file dove è stata rilevata.
+        Restituisce ("UNKNOWN", None) se non viene trovata una licenza valida.
     """
 
-    # 1. Check if ScanCode detected packages (e.g., package.json, pom.xml)
-    # This is often the "Declared" license and is very reliable.
+    # 1. Verifica se ScanCode ha rilevato pacchetti (es. package.json, pom.xml)
+    # Questa è spesso la licenza "Dichiarata" ed è molto affidabile.
     if "packages" in data and data["packages"]:
-        # Take the first package found at the root or near it
+        # Prende il primo pacchetto trovato alla radice o vicino ad essa
         for pkg in data["packages"]:
             if pkg.get("declared_license_expression"):
                 return pkg.get("declared_license_expression")
@@ -159,17 +159,17 @@ def detect_main_license_scancode(data: Dict[str, Any]) -> Tuple[str, str]:
         if not licenses:
             continue
 
-        # Ignore matches with low confidence
+        # Ignora le corrispondenze con bassa confidenza
         if entry.get("percentage_of_license_text", 0) < 80.0:
             continue
 
-        # Calculate file depth (0 = root)
+        # Calcola la profondità del file (0 = radice)
         depth = path.count("/")
         filename = os.path.basename(path).lower()
 
-        # --- SCORING HEURISTICS ---
+        # --- EURISTICHE DI PUNTEGGIO ---
 
-        # Filter 1: Ignore junk directories
+        # Filtro 1: Ignora directory inutili
         if any(x in path.lower() for x in ["node_modules", "vendor", "third_party", "test", "docs"]):
             continue
 
@@ -181,27 +181,27 @@ def detect_main_license_scancode(data: Dict[str, Any]) -> Tuple[str, str]:
 
             weight = 0
 
-            # BONUS 1: Position (Root is King)
+            # BONUS 1: Posizione (La Radice è Regina)
             if depth == 0:
                 weight += 100
             elif depth == 1:
                 weight += 50
             else:
-                weight += 0  # Deep files are worth little for the main license
+                weight += 0  # I file profondi valgono poco per la licenza principale
 
-            # BONUS 2: File name
+            # BONUS 2: Nome del file
             if filename in ["license", "license.txt", "license.md", "copying", "copying.txt"]:
                 weight += 100
             elif filename.startswith("license") or filename.startswith("copying"):
                 weight += 80
             elif filename in ["readme", "readme.md", "readme.txt"]:
-                weight += 60  # The license is often mentioned in the README
+                weight += 60  # La licenza è spesso menzionata nel README
             elif filename in ["package.json", "setup.py", "pom.xml", "cargo.toml"]:
-                weight += 90  # Manifest file
+                weight += 90  # File manifest
 
-            # BONUS 3: Match Coverage (How much of the file is license?)
-            # If a file is 100% license text, it is very relevant.
-            # (ScanCode sometimes provides match_coverage or start/end_line)
+            # BONUS 3: Copertura della Corrispondenza (Quanto del file è licenza?)
+            # Se un file è al 100% testo di licenza, è molto rilevante.
+            # (ScanCode a volte fornisce match_coverage o start/end_line)
             if lic.get("matched_rule", {}).get("is_license_text"):
                 weight += 40
 
@@ -215,28 +215,28 @@ def detect_main_license_scancode(data: Dict[str, Any]) -> Tuple[str, str]:
     if not candidates:
         return "UNKNOWN"
 
-    # Sort candidates by descending weight
+    # Ordina i candidati per peso decrescente
     candidates.sort(key=lambda x: x["weight"], reverse=True)
 
-    # Debug: Print top 3 candidates to understand what is happening
+    # Debug: Stampa i primi 3 candidati per capire cosa sta succedendo
     # for c in candidates[:3]:
     #     print(f"Candidate: {c['spdx']} | Weight: {c['weight']} | Path: {c['path']}")
 
-    # Return the winner
+    # Restituisce il vincitore
     return candidates[0]["spdx"], candidates[0]["path"]
 
 
 def extract_file_licenses(scancode_data: Dict[str, Any]) -> Dict[str, str]:
     """
-    Extracts license expressions for each file from the ScanCode data.
+    Estrae le espressioni di licenza per ogni file dai dati di ScanCode.
 
-    It aggregates multiple matches within a single file using 'AND'.
+    Aggrega più corrispondenze all'interno di un singolo file utilizzando 'AND'.
 
     Args:
-        scancode_data (Dict[str, Any]): The ScanCode JSON output (filtered).
+        scancode_data (Dict[str, Any]): L'output JSON di ScanCode (filtrato).
 
     Returns:
-        Dict[str, str]: A dictionary mapping file paths to their detected SPDX expression.
+        Dict[str, str]: Un dizionario che mappa i percorsi dei file alla loro espressione SPDX rilevata.
     """
     results = {}
 
@@ -247,13 +247,13 @@ def extract_file_licenses(scancode_data: Dict[str, Any]) -> Dict[str, str]:
         if not matches:
             continue
 
-        # Collect unique SPDX identifiers found in the file
+        # Raccoglie gli identificatori SPDX univoci trovati nel file
         unique_spdx = list({m.get("license_spdx") for m in matches if m.get("license_spdx")})
 
         if not unique_spdx:
             continue
 
-        # If multiple licenses are found in the same file, combine them with AND
+        # Se vengono trovate più licenze nello stesso file, combinarle con AND
         if len(unique_spdx) == 1:
             results[path] = unique_spdx[0]
         else:

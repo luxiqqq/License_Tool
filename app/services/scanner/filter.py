@@ -151,7 +151,7 @@ def _save_to_json(data: dict, filename: str):
 
 def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
     """
-    Filters ScanCode results using rules loaded from an external JSON file.
+    Filtra i risultati di ScanCode utilizzando regole caricate da un file JSON esterno.
     """
     patterns = _load_rules_patterns()
     filtered_files = {"files": []}
@@ -181,11 +181,11 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
             if not is_valid_declaration:
                 continue
 
-            # Resolve SPDX ID inline
+            # Risolve l'ID SPDX inline
             raw_spdx = match.get('license_spdx', '')
             final_spdx = "LicenseRef-scancode-unknown"
 
-            # FIX C0301: Line too long
+            # FIX C0301: Linea troppo lunga
             scancode_id_ok = (
                     raw_spdx and
                     "unknown" not in raw_spdx.lower() and
