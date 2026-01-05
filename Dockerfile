@@ -1,5 +1,4 @@
-# FORZA L'ARCHITETTURA INTEL (AMD64)
-# Questo è fondamentale per far girare il binario di ScanCode su Mac M1/M2/M3
+# Usa linux/amd64 per compatibilità
 FROM --platform=linux/amd64 python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -9,39 +8,53 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# 1. Dipendenze di sistema
+# 1. Dipendenze di sistema (AGGIUNTE: pkg-config e libicu-dev per PyICU)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential git curl wget bzip2 xz-utils zlib1g \
-    libxml2-dev libxslt1-dev libpopt0 libzstd1 libgomp1 libarchive-dev \
+    build-essential \
+    git \
+    curl \
+    wget \
+    bzip2 \
+    xz-utils \
+    zlib1g \
+    libxml2-dev \
+    libxslt1-dev \
+    libpopt0 \
+    libzstd1 \
+    libgomp1 \
+    libarchive-dev \
+    pkg-config \
+    libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. INSTALLAZIONE SCANCODE (Standalone in /opt)
-# Usiamo la versione v32.4.1 e la nuova URL 'aboutcode-org'
+# 2. INSTALLAZIONE SCANCODE (Source Code Method)
 WORKDIR /opt
-# Creiamo la cartella prima per evitare problemi di nomi
-RUN mkdir scancode-toolkit && \
-    wget https://github.com/aboutcode-org/scancode-toolkit/releases/download/v32.4.1/scancode-toolkit-v32.4.1_py3.11-linux.tar.gz && \
-    tar -xzf scancode-toolkit-v32.4.1_py3.11-linux.tar.gz -C scancode-toolkit --strip-components=1 && \
-    rm scancode-toolkit-v32.4.1_py3.11-linux.tar.gz
 
-# Aggiorniamo il PATH
-ENV PATH=/opt/scancode-toolkit:$PATH
+# Scarichiamo il codice sorgente (v32.4.1)
+RUN wget -qO scancode-source.tar.gz https://github.com/aboutcode-org/scancode-toolkit/archive/refs/tags/v32.4.1.tar.gz \
+    && mkdir scancode-toolkit \
+    && tar -xzf scancode-source.tar.gz -C scancode-toolkit --strip-components=1 \
+    && rm scancode-source.tar.gz
 
-# 3. INSTALLAZIONE OLLAMA (Script ufficiale)
+# Ora 'pip install .' funzionerà perché abbiamo installato 'pkg-config' e 'libicu-dev'
+WORKDIR /opt/scancode-toolkit
+RUN pip install .
+
+# Verifica immediata
+RUN scancode --version
+
+# 3. Setup Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
+# 4. Configurazione App
 WORKDIR /app
-
-# 4. Dipendenze Python
 COPY pyproject.toml requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copia sorgenti e script
 COPY app ./app
 COPY start-container.sh /app/start-container.sh
 RUN chmod +x /app/start-container.sh
 RUN mkdir -p /app/data
 
 EXPOSE 8000 11434
-
 CMD ["/app/start-container.sh"]

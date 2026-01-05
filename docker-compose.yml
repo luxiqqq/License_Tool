@@ -7,35 +7,15 @@ services:
       - "8000:8000"
       - "11434:11434"
     volumes:
-      # [ISPIRAZIONE DAL TUO ENV]
-      # Hai tutto sotto '/Users/gius03/pythonApp'.
-      # Montiamo QUELLA cartella principale in '/app/data' dentro il container.
-      # Così il container vede e scrive direttamente sul tuo Mac.
       - /Users/gius03/pythonApp:/app/data
-
-      # [NECESSARIO PER I MODELLI CLOUD]
-      # Per usare i modelli 'cloud' serve la tua autenticazione.
-      # Montiamo la tua cartella di configurazione Ollama del Mac.
       - ~/.ollama:/root/.ollama
-
     environment:
-      # --- 1. SCANCODE (Adattato) ---
-      # Nel tuo env: /Users/gius03/tools/scancode-toolkit-v32.4.1/scancode
-      # In Docker:   /opt/scancode-toolkit/scancode (Percorso fisso Linux)
-      - SCANCODE_BIN=/opt/scancode-toolkit/scancode
-
-      # --- 2. PERCORSI OUTPUT (Tradotti) ---
-      # Nel tuo env: /Users/gius03/pythonApp
-      # In Docker:   /app/data (che corrisponde alla cartella sopra)
+      - SCANCODE_BIN=scancode
+      - PYTHONDONTWRITEBYTECODE=1
       - CLONE_BASE_DIR=/app/data
       - OUTPUT_BASE_DIR=/app/data/json
       - MINIMAL_JSON_BASE_DIR=/app/data/json/Minimal
-
-      # --- 3. OLLAMA (Copiati dal tuo env) ---
-      # Questi rimangono identici perché sono modelli Cloud
       - OLLAMA_CODING_MODEL=qwen3-coder:480b-cloud
       - OLLAMA_GENERAL_MODEL=deepseek-v3.1:671b-cloud
       - OLLAMA_URL=http://localhost:11434/api/generate
-
-      # --- 4. ALTRO ---
-      - CALLBACK_URL=http://localhost:5173/callback
+      - CALLBACK_URL=http://localhost:5173/callbacklback
