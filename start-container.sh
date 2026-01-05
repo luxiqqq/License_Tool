@@ -1,32 +1,76 @@
 #!/bin/bash
+set -e
 
-# 1. Avvia Ollama in background
-echo "Starting Ollama server..."
+# Funzione per estrarre il link di auth dal JSON
+get_auth_url() {
+    echo "$1" | python3 -c "import sys, json; print(json.load(sys.stdin).get('signin_url', ''))"
+}
+
+# ==============================================================================
+# 1. AVVIO OLLAMA
+# ==============================================================================
+echo "🔴 Starting Ollama server..."
 ollama serve &
 
-# 2. Attendi che Ollama sia pronto
-echo "Waiting for Ollama..."
-until curl -s http://localhost:11434/api/version > /dev/null; do
-    sleep 2
+# Aspettiamo che la porta sia aperta
+echo "⏳ Waiting for Ollama startup..."
+until curl -s http://127.0.0.1:11434/api/version > /dev/null; do
+    sleep 1
 done
-echo "Ollama is ready!"
+echo "✅ Ollama is active!"
 
-# 3. Pull dei Modelli Cloud (Dal tuo ENV)
-# Usa le variabili d'ambiente passate da docker-compose
-echo "Setting up Cloud Models from ENV..."
+# ==============================================================================
+# 2. SELEZIONE E PULL DEL MODELLO
+# ==============================================================================
+# Determina quale modello usare (priorità al Cloud)
+MODEL_TO_USE=${OLLAMA_GENERAL_MODEL:-$OLLAMA_CODING_MODEL}
 
-if [ ! -z "$OLLAMA_CODING_MODEL" ]; then
-    echo "Pulling Coding Model: $OLLAMA_CODING_MODEL"
-    # Poiché sono modelli cloud e hai montato ~/.ollama, questo sarà velocissimo
-    ollama pull "$OLLAMA_CODING_MODEL"
+echo "📦 Ensuring model '$MODEL_TO_USE' is available..."
+# Facciamo il PULL preventivo. Se è un modello cloud, scaricherà solo il manifesto (veloce).
+ollama pull "$MODEL_TO_USE"
+
+# ==============================================================================
+# 3. CONTROLLO AUTORIZZAZIONE (BLOCCANTE)
+# ==============================================================================
+# Eseguiamo questo controllo solo se è un modello "-cloud"
+if [[ "$MODEL_TO_USE" == *"-cloud" ]]; then
+    echo "☁️  Verifying authorization for Cloud Model..."
+
+    # Facciamo la richiesta di test. Usiamo "|| true" per evitare crash se riceviamo errori 401/500
+    RESPONSE=$(curl -s -X POST http://127.0.0.1:11434/api/generate -d "{\"model\": \"$MODEL_TO_USE\", \"prompt\": \"hi\", \"stream\": false}" || true)
+
+    # Controlliamo se la risposta contiene "unauthorized"
+    if echo "$RESPONSE" | grep -q "unauthorized"; then
+
+        # Estraiamo il link
+        AUTH_URL=$(get_auth_url "$RESPONSE")
+
+        echo ""
+        echo "🚨 ======================================================= 🚨"
+        echo "   AUTORIZZAZIONE RICHIESTA PER OLLAMA CLOUD"
+        echo "   Il container è in pausa finché non autorizzi questo dispositivo."
+        echo "   ======================================================="
+        echo ""
+        echo "👉  CLICCA QUESTO LINK E PREMI 'AUTHORIZE':"
+        echo "    $AUTH_URL"
+        echo ""
+        echo "⏳ In attesa di autorizzazione..."
+
+        # CICLO DI ATTESA INFINITO (Blocca l'avvio di Python)
+        # Continua a provare ogni 5 secondi finché "unauthorized" sparisce
+        while echo "$RESPONSE" | grep -q "unauthorized"; do
+            sleep 5
+            RESPONSE=$(curl -s -X POST http://127.0.0.1:11434/api/generate -d "{\"model\": \"$MODEL_TO_USE\", \"prompt\": \"hi\", \"stream\": false}" || true)
+        done
+
+        echo "✅ Autorizzazione Rilevata! Sblocco in corso..."
+    else
+        echo "✅ Il modello è già autorizzato e pronto all'uso."
+    fi
 fi
 
-if [ ! -z "$OLLAMA_GENERAL_MODEL" ]; then
-    echo "Pulling General Model: $OLLAMA_GENERAL_MODEL"
-    ollama pull "$OLLAMA_GENERAL_MODEL"
-fi
-
-# 4. Avvia il Backend
-echo "Starting FastAPI Backend..."
-# Qui userà SCANCODE_BIN=/opt/scancode-toolkit/scancode come definito nel compose
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+# ==============================================================================
+# 4. AVVIO BACKEND PYTHON
+# ==============================================================================
+echo "🚀 Starting FastAPI Backend..."
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
