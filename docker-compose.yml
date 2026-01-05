@@ -5,10 +5,6 @@ services:
     container_name: license-tool-backend
     ports:
       - "8000:8000"
-      - "11434:11434"
-    volumes:
-      - /Users/gius03/pythonApp:/app/data
-      - ~/.ollama:/root/.ollama
     environment:
       - SCANCODE_BIN=scancode
       - PYTHONDONTWRITEBYTECODE=1
@@ -17,5 +13,6 @@ services:
       - MINIMAL_JSON_BASE_DIR=/app/data/json/Minimal
       - OLLAMA_CODING_MODEL=qwen3-coder:480b-cloud
       - OLLAMA_GENERAL_MODEL=deepseek-v3.1:671b-cloud
-      - OLLAMA_URL=http://localhost:11434/api/generate
-      - CALLBACK_URL=http://localhost:5173/callbacklback
+      - OLLAMA_URL=http://127.0.0.1:11434/api/generate
+      - OLLAMA_HOST_VERSION=http://127.0.0.1:11434/api/version
+      - OLLAMA_HOST_TAGS=http://127.0.0.1:11434/api/tags

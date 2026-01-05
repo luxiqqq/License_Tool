@@ -1,5 +1,5 @@
 # Usa linux/amd64 per compatibilità
-FROM --platform=linux/amd64 python:3.11-slim
+FROM --platform=linux/amd64 python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -12,6 +12,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
+    dos2unix \
     curl \
     wget \
     bzip2 \
@@ -53,8 +54,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY start-container.sh /app/start-container.sh
-RUN chmod +x /app/start-container.sh
+# dos2unix per convertire i file di script da Windows a Unix
+RUN dos2unix /app/start-container.sh && chmod +x /app/start-container.sh
 RUN mkdir -p /app/data
 
-EXPOSE 8000 11434
+EXPOSE 8000
 CMD ["/app/start-container.sh"]
