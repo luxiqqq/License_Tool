@@ -65,6 +65,30 @@ def run_scancode(repo_path: str) -> Dict[str, Any]:
     repo_name = os.path.basename(os.path.normpath(repo_path))
     output_file = os.path.join(OUTPUT_BASE_DIR, f"{repo_name}_scancode_output.json")
 
+    # --- Automatic large file detection ---
+    MAX_FILE_SIZE_MB = 1  ## 1MB is more than enough for source code
+    limit_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
+
+    logger.info("Pre-scanning for large files (>%d MB)...", MAX_FILE_SIZE_MB)
+
+    for root, dirs, files in os.walk(repo_path):
+        # Avoid entering already ignored folders to speed up
+        # (Note: os.walk allows modifying 'dirs' in-place)
+        dirs[:] = [d for d in dirs if d not in ["node_modules", "vendor", ".git", "target"]]
+
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            try:
+                # If the file is too large, add it to the ignore list
+                if os.path.getsize(file_path) > limit_bytes:
+                    # Calculate the relative path for ignore
+                    rel_path = os.path.relpath(file_path, repo_path)
+                    logger.warning(f"Auto-ignoring large file: {rel_path}")
+                    ignore_patterns.append(rel_path)
+            except OSError:
+                pass # Unaccessible file, ignore error
+    # ------------------------------------------------------
+
     # 2. Build the ScanCode command
     cmd = [
         SCANCODE_BIN,
@@ -217,10 +241,6 @@ def detect_main_license_scancode(data: Dict[str, Any]) -> Tuple[str, str]:
 
     # Sort candidates by descending weight
     candidates.sort(key=lambda x: x["weight"], reverse=True)
-
-    # Debug: Print top 3 candidates to understand what is happening
-    # for c in candidates[:3]:
-    #     print(f"Candidate: {c['spdx']} | Weight: {c['weight']} | Path: {c['path']}")
 
     # Return the winner
     return candidates[0]["spdx"], candidates[0]["path"]
