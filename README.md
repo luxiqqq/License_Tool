@@ -1,6 +1,7 @@
-# ⚖️ License Tool
+# ⚖️ License Checker
 
-**License Tool** è una piattaforma avanzata per il controllo della conformità delle licenze software. Il sistema permette agli sviluppatori di analizzare interi repository o caricare archivi localmente per identificare conflitti legali tra la licenza principale del progetto e le licenze dei singoli file. Con la possibilità di avere suggerimenti sulla licenza da adoperare all'interno del proprio progetto nell'eventualità che ne sia sprovvisto.
+**License Checker** è una piattaforma avanzata per il controllo della conformità delle licenze software. Il sistema permette agli sviluppatori di analizzare interi repository o caricare archivi localmente per identificare conflitti legali tra la licenza principale del progetto e le licenze dei singoli file. Con la possibilità di avere suggerimenti sulla licenza da adoperare all'interno del proprio progetto nell'eventualità che ne sia sprovvisto.
+
 Sviluppato da: **Riccio Giuseppe, Simeone Lucia, Medugno Vittoria, Capone Antonella, Liparulo Elisa**.
 
 ---
