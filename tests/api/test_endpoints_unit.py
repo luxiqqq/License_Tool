@@ -11,10 +11,12 @@ The suite covers:
 2. ZIP Archive Management (Upload and validation).
 3. Analysis Lifecycle (License scanning and schema validation).
 4. Post-processing (Code regeneration and artifact download).
+5. Cloning Endpoint (Validation and execution).
 """
 
 import pytest
 import httpx
+from fastapi import HTTPException
 from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 from urllib.parse import urlparse, parse_qs
@@ -301,6 +303,16 @@ def test_download_missing_repo(mock_download):
 
     assert response.status_code == 400
     assert "Repo not cloned" in response.json()["detail"]
+
+
+def test_download_missing_params(mock_download):
+    """
+    Verifies input validation for the /download endpoint.
+    If 'owner' or 'repo' are missing, it should return 400.
+    """
+    response = client.post("/api/download", json={"owner": "only_owner"})
+    assert response.status_code == 400
+    assert "Owner and Repo are required" in response.json()["detail"]
 
 
 # ==================================================================================
@@ -697,9 +709,6 @@ def test_suggest_license_without_detected_licenses():
     assert call_kwargs["detected_licenses"] is None
 
 
-from fastapi import HTTPException
-
-
 def test_clone_success(mock_cloning):
     """
     Verifies the repository cloning endpoint success path.
@@ -779,3 +788,16 @@ def test_upload_zip_internal_error(mock_upload_zip):
 
     assert response.status_code == 500
     assert "Internal Error" in response.json()["detail"]
+
+
+# ==================================================================================
+#                                ROOT ENDPOINT TEST
+# ==================================================================================
+
+def test_root_endpoint():
+    """
+    Test the root endpoint ("/") to ensure the API is running.
+    """
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "License Checker Backend is running"}
