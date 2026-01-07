@@ -14,41 +14,9 @@ import pytest
 import os
 from unittest.mock import patch
 
-
 # ==============================================================================
-# HELPER DI UTILITÀ
+# GLOBAL MOCKS & PATCHES
 # ==============================================================================
-
-def msg_matches_helper(s: str, en: str, it: str) -> bool:
-    """
-    Controlla se una stringa contiene la variante inglese o italiana di un messaggio.
-    Utile per asserire messaggi di errore che potrebbero essere localizzati.
-
-    Args:
-        s (str): La stringa da controllare (può essere None).
-        en (str): La sottostringa inglese attesa.
-        it (str): La sottostringa italiana attesa.
-
-    Returns:
-        bool: True se `en` o `it` si trova in `s`, False altrimenti.
-    """
-    if s is None:
-        return False
-    return (en in s) or (it in s)
-
-
-@pytest.fixture
-def _msg_matches():
-    """
-    Fixture che espone la funzione `msg_matches_helper`.
-    """
-    return msg_matches_helper
-
-
-# ==============================================================================
-# MOCK E PATCH GLOBALI
-# ==============================================================================
-
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_env_vars():
@@ -197,4 +165,3 @@ def MockOr():
     """Restituisce la classe Or dal modulo parser."""
     from app.services.compatibility import parser_spdx
     return parser_spdx.Or
-

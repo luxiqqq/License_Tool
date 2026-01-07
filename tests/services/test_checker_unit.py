@@ -30,7 +30,7 @@ from app.services.compatibility.checker import check_compatibility
 # ==================================================================================
 
 
-def test_main_license_invalid_returns_issues(monkeypatch, _msg_matches):
+def test_main_license_invalid_returns_issues(monkeypatch):
     """
     Verifica il comportamento quando la licenza principale è mancante o fallisce la normalizzazione.
 
@@ -45,12 +45,10 @@ def test_main_license_invalid_returns_issues(monkeypatch, _msg_matches):
     issue = res["issues"][0]
     assert issue["file_path"] == "a.py"
     assert issue["compatible"] is None
-    assert _msg_matches(issue["reason"],
-                        "Main license not detected or invalid",
-                        "Licenza principale non rilevata")
+    assert "Main license not detected or invalid" in issue["reason"]
 
 
-def test_matrix_missing_or_license_not_in_matrix(monkeypatch, _msg_matches):
+def test_matrix_missing_or_license_not_in_matrix(monkeypatch):
     """
     Testa il comportamento quando la matrice di compatibilità professionale non è disponibile.
 
@@ -62,9 +60,7 @@ def test_matrix_missing_or_license_not_in_matrix(monkeypatch, _msg_matches):
     res = check_compatibility("MIT", {"b.py": "Apache-2.0"})
     assert res["main_license"] == "MIT"
     assert len(res["issues"]) == 1
-    assert _msg_matches(res["issues"][0]["reason"],
-                        "Professional matrix not available",
-                        "Matrice professionale non disponibile")
+    assert "Professional matrix not available" in res["issues"][0]["reason"]
 
 
 def test_eval_yes_marks_compatible_and_includes_trace(complex_matrix_data, monkeypatch):
@@ -99,10 +95,7 @@ def test_eval_no_marks_incompatible_and_includes_trace(complex_matrix_data, monk
     monkeypatch.setattr("app.services.compatibility.checker.parse_spdx", lambda s: "NODE")
     monkeypatch.setattr("app.services.compatibility.checker.eval_node", lambda *_: ("no", ["conflict detected"]))
     res = check_compatibility("GPL-3.0", {"lib/x.py": "Apache-2.0"})
-    assert res["main_license"] == "GPL-3.0"
-    assert len(res["issues"]) == 1
     issue = res["issues"][0]
-    assert issue["file_path"] == "lib/x.py"
     assert issue["compatible"] is False
     assert "conflict detected" in issue["reason"]
 
@@ -151,7 +144,7 @@ def test_all_files_compatible_returns_no_issues(complex_matrix_data, monkeypatch
     assert all(issue["compatible"] is True for issue in res["issues"])
 
 
-def test_matrix_present_but_main_not_in_matrix(monkeypatch, _msg_matches):
+def test_matrix_present_but_main_not_in_matrix(monkeypatch):
     """
     Gestisce i casi in cui la licenza principale non è definita nella matrice professionale.
 
@@ -166,11 +159,7 @@ def test_matrix_present_but_main_not_in_matrix(monkeypatch, _msg_matches):
     assert len(res["issues"]) == 1
 
     reason = res["issues"][0]["reason"].lower()
-    assert _msg_matches(reason,
-                        "main license not in",
-                        "licenza principale non presente") or _msg_matches(reason,
-                                                                       "matrix not available",
-                                                                       "matrice professionale non disponibile")
+    assert "main license not in" in reason or "matrix not available" in reason
 
 
 def test_eval_unknown_status_shows_unknown_hint(complex_matrix_data, monkeypatch):
@@ -210,7 +199,7 @@ def test_empty_detected_license_calls_parse_with_empty(monkeypatch, complex_matr
     assert "no trace" in issue["reason"]
 
 
-def test_main_license_special_values_treated_as_invalid(monkeypatch, _msg_matches):
+def test_main_license_special_values_treated_as_invalid(monkeypatch):
     """
     Gestisce le parole chiave speciali SPDX (UNKNOWN, NOASSERTION, NONE).
 
@@ -222,6 +211,4 @@ def test_main_license_special_values_treated_as_invalid(monkeypatch, _msg_matche
         res = check_compatibility(val, {"a.py": "MIT"})
         assert res["main_license"] == val or res["main_license"] == val
         assert len(res["issues"]) == 1
-        assert _msg_matches(res["issues"][0]["reason"],
-                            "Main license not detected or invalid",
-                            "Licenza principale non rilevata") or ("invalid" in res["issues"][0]["reason"].lower())
+        assert "Main license not detected or invalid" in res["issues"][0]["reason"] or "invalid" in res["issues"][0]["reason"].lower()

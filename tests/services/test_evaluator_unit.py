@@ -40,18 +40,16 @@ def test_lookup_status_unknown():
     assert evaluator._lookup_status("MIT", "Unknown-License") == "unknown"
     assert evaluator._lookup_status("NonExistentMain", "MIT") == "unknown"
 
-def test_eval_node_none(_msg_matches):
+def test_eval_node_none():
     """
-    Garantisce che passare `None` come nodo risulti in uno stato 'unknown'
-    e un messaggio di errore appropriato nella traccia.
+    Ensures that passing `None` as a node results in an 'unknown' status
+    and an appropriate error message in the trace.
     """
     status, trace = evaluator.eval_node("MIT", None)
     assert status == "unknown"
-    assert _msg_matches(trace[0],
-                        "Missing expression or not recognized",
-                        "Espressione mancante o non riconosciuta")
+    assert "Missing expression or not recognized" in trace[0]
 
-def test_eval_leaf_simple(_msg_matches, MockLeaf):
+def test_eval_leaf_simple(MockLeaf):
     """
     Testa la valutazione di un nodo Leaf semplice (licenza singola).
     Scenario: Controllo 'Apache-2.0' contro 'MIT'.
@@ -61,11 +59,9 @@ def test_eval_leaf_simple(_msg_matches, MockLeaf):
 
     status, trace = evaluator.eval_node("MIT", node)
     assert status == "yes"
-    assert _msg_matches(trace[0],
-                        "Apache-2.0 → yes with respect to MIT",
-                        "Apache-2.0 → yes rispetto a MIT")
+    assert "Apache-2.0 → yes with respect to MIT" in trace[0]
 
-def test_eval_leaf_with_exception(_msg_matches, MockLeaf):
+def test_eval_leaf_with_exception(MockLeaf):
     """
     Testa la gestione della clausola 'WITH'.
     Scenario: 'GPL-3.0 WITH Classpath-exception'.
@@ -80,10 +76,8 @@ def test_eval_leaf_with_exception(_msg_matches, MockLeaf):
     assert status == "yes"
     # Garantire che il messaggio di fallimento NON sia presente
     assert "exception requires manual verification" not in trace[0]
-    # Garantire che il messaggio di successo/rilevamento SIA presente
-    assert _msg_matches(trace[0],
-                        "Exception detected",
-                        "Eccezione rilevata")
+    # Ensure the success/detection message IS present
+    assert "Exception detected" in trace[0]
 
 def test_eval_or_logic_optimistic(MockLeaf, MockOr):
     """
@@ -114,7 +108,7 @@ def test_eval_and_logic_conservative(MockLeaf, MockAnd):
     assert len(trace) >= 2
 
 
-def test_and_cross_compatibility_check(_msg_matches, MockLeaf, MockAnd):
+def test_and_cross_compatibility_check(MockLeaf, MockAnd):
     """
     Verifica che la logica 'AND' esegua controlli di compatibilità incrociata tra operandi.
     Scenario: 'Apache-2.0 AND GPL-3.0'.
@@ -128,10 +122,8 @@ def test_and_cross_compatibility_check(_msg_matches, MockLeaf, MockAnd):
     status, trace = evaluator.eval_node("GPL-3.0", node)
 
     trace_str = " ".join(trace)
-    # Verificare che almeno un controllo di compatibilità incrociata sia registrato (L->R)
-    assert _msg_matches(trace_str,
-                        "Cross compatibility:",
-                        "Compatibilità incrociata:")
+    # Verify that at least one cross-compatibility check is recorded (L->R)
+    assert "Cross compatibility:" in trace_str
 
 @pytest.mark.parametrize("a,b,expected", [
     ("yes", "yes", "yes"),
@@ -170,7 +162,7 @@ def test_lookup_status_empty_matrix():
     with patch("app.services.compatibility.evaluator.get_matrix", return_value={}):
         assert evaluator._lookup_status("MIT", "MIT") == "unknown"
 
-def test_eval_leaf_with_exception_fail(_msg_matches, MockLeaf):
+def test_eval_leaf_with_exception_fail(MockLeaf):
     """
     Testa una clausola di eccezione 'WITH' dove la licenza base è intrinsecamente INCOMPATIBILE.
     Scenario: 'Proprietary WITH Some-Exception' contro 'GPL-3.0'.
@@ -182,9 +174,7 @@ def test_eval_leaf_with_exception_fail(_msg_matches, MockLeaf):
     status, trace = evaluator.eval_node("GPL-3.0", node)
 
     assert status == "no"
-    assert _msg_matches(trace[0],
-                        "exception presence requires manual verification",
-                        "Nota: presenza di eccezione richiede verifica manuale")
+    assert "exception presence requires manual verification" in trace[0]
 
 def test_combine_conditional_logic():
     """
@@ -200,7 +190,7 @@ def test_combine_conditional_logic():
     assert evaluator._combine_or("no", "conditional") == "conditional"
     assert evaluator._combine_or("conditional", "conditional") == "conditional"
 
-def test_eval_node_unrecognized_type(_msg_matches, MockNode):
+def test_eval_node_unrecognized_type(MockNode):
     """
     Programmazione difensiva: Testa la reazione del sistema a un tipo di nodo sconosciuto
     (ad es., se il parser viene esteso ma l'evaluatore non viene aggiornato).
@@ -211,11 +201,9 @@ def test_eval_node_unrecognized_type(_msg_matches, MockNode):
 
     status, trace = evaluator.eval_node("MIT", UnknownNode())
     assert status == "unknown"
-    assert _msg_matches(trace[0],
-                        "Unrecognized node",
-                        "Nodo non riconosciuto")
+    assert "Unrecognized node" in trace[0]
 
-def test_and_nested_leaves_collection(_msg_matches, MockLeaf, MockOr, MockAnd):
+def test_and_nested_leaves_collection(MockLeaf, MockOr, MockAnd):
     """
     Test avanzato: Verifica la raccolta ricorsiva di foglie per controlli incrociati
     in strutture annidate.
@@ -232,10 +220,8 @@ def test_and_nested_leaves_collection(_msg_matches, MockLeaf, MockOr, MockAnd):
 
     trace_str = " ".join(trace)
 
-    # Verificare che i controlli incrociati siano stati eseguiti per TUTTE le foglie annidate
-    assert _msg_matches(trace_str,
-                        "Cross compatibility:",
-                        "Compatibilità incrociata:")
+    # Verify that cross-checks were performed for ALL nested leaves
+    assert "Cross compatibility:" in trace_str
 
 @pytest.mark.parametrize("main,left,right,expected", [
     ("MIT", "Apache-2.0", "GPL-3.0", "no"),          # yes AND no -> no

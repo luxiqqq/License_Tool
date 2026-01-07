@@ -164,7 +164,7 @@ def test_build_minimal_json_edge_cases():
         res = build_minimal_json(data)
         assert len(res["files"]) == 0
 
-# --- TEST UNITARI: remove_main_license ---
+# --- UNIT TESTS: remove_main_license ---
 
 def test_remove_main_license_single():
     """

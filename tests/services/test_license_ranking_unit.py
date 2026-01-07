@@ -270,3 +270,4 @@ class TestLicenseRankingEdgeCases:
             licenses = {"file1.py": "  GPL-3.0   OR   MIT  "}
             result = choose_most_permissive_license_in_file(licenses)
             assert result["file1.py"] == "MIT"
+

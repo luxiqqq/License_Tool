@@ -11,10 +11,6 @@ La suite è suddivisa in:
 4. Recupero degli artefatti (Rigenerazione e Download).
 """
 
-# ==================================================================================
-#                          TEST SUITE: GITHUB OAUTH FLOW
-# ==================================================================================
-
 import pytest
 import httpx
 from unittest.mock import patch, AsyncMock, MagicMock
@@ -50,6 +46,10 @@ def mock_clone():
     with patch("app.controllers.analysis.perform_cloning") as m:
         yield m
 
+# ==================================================================================
+#                          TEST SUITE: GITHUB OAUTH FLOW
+# ==================================================================================
+
 """
 Suite di integrazione API: Ciclo di vita degli archivi & Orchestrazione dell'analisi.
 
@@ -82,7 +82,7 @@ def sample_zip_file():
     """
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        # Structure with a single root directory
+        # Struttura con una singola directory radice
         zip_file.writestr('test-repo-main/README.md', '# Test Repository\nThis is a test.')
         zip_file.writestr('test-repo-main/LICENSE',
                           'MIT License\n\nCopyright (c) 2025 Test\n\n'
@@ -154,7 +154,9 @@ def test_upload_zip_success_with_root_folder(sample_zip_file, cleanup_test_repos
     """
     Valida la logica di estrazione ZIP e normalizzazione dei percorsi.
 
-    Questo test garantisce che i repository impacchettati con una singola directory padre (es. test-repo-main/) vengano "appiattiti" in modo che il codice sorgente risieda direttamente nella directory di destinazione senza nidificazioni ridondanti.
+    This test ensures that repositories packaged with a single parent directory
+    (e.g., test-repo-main/) are "flattened" so that the source code resides
+    directly in the target directory without redundant nesting.
     """
     files = {
         'uploaded_file': ('test-repo.zip', sample_zip_file, 'application/zip')
@@ -174,7 +176,7 @@ def test_upload_zip_success_with_root_folder(sample_zip_file, cleanup_test_repos
     assert json_response['repo'] == 'testrepo'
     assert 'local_path' in json_response
 
-    # Verify that the files have been extracted correctly
+    # Verifica che i file siano stati estratti correttamente
     repo_path = json_response['local_path']
     assert os.path.exists(repo_path)
     assert os.path.exists(os.path.join(repo_path, 'README.md'))
@@ -189,8 +191,10 @@ def test_upload_zip_success_flat_structure(flat_zip_file, cleanup_test_repos):
     """
     Test di integrazione: Caricamento di uno ZIP con una struttura di directory piatta.
 
-    Obiettivo:
-    Garantisce che la logica di estrazione identifichi correttamente che non esiste una singola directory radice da "appiattire" ed estragga invece tutti i file direttamente nella directory di destinazione {owner}_{repo}.
+    Objective:
+    Ensures that the extraction logic correctly identifies that there is
+    no single root directory to 'flatten' and instead extracts all files
+    directly into the designated {owner}_{repo} target directory.
 
     Validazione:
     1. Risposta HTTP 200 OK.
@@ -220,7 +224,9 @@ def test_upload_zip_invalid_file_type(cleanup_test_repos):
     """
     Verifica che i file non supportati vengano bloccati.
 
-    L'endpoint deve agire come un gatekeeper: se l'utente tenta di caricare un file di testo (.txt) invece di un archivio, il sistema deve interrompere l'operazione prima di toccare il file system.
+    The endpoint must act as a gatekeeper: if the user attempts to upload a
+    text file (.txt) instead of an archive, the system must abort
+    the operation before touching the file system.
     """
     fake_file = BytesIO(b"This is not a zip file")
     files = {
@@ -466,14 +472,14 @@ def test_analyze_on_empty_repository(cleanup_test_repos):
     Valida l'orchestrazione tra l'endpoint, il file system e il flusso di lavoro di analisi quando non sono presenti dati. Utilizza un mock minimo per
     ScanCode per evitare l'esecuzione reale su una directory vuota.
     """
-    # Manually create an empty directory
+    # Crea manualmente una directory vuota
     owner, repo = 'emptyowner', 'emptyrepo'
     empty_path = os.path.join(config.CLONE_BASE_DIR, f'{owner}_{repo}')
     os.makedirs(empty_path, exist_ok=True)
 
     try:
         with patch('app.services.analysis_workflow.run_scancode') as mock_scan:
-            # Mock scancode to simulate a scan on an empty repo
+            # Mock scancode per simulare una scansione su un repository vuoto
             mock_scan.return_value = {'files': []}
 
             response = client.post('/api/analyze', json={'owner': owner, 'repo': repo})
@@ -533,7 +539,7 @@ def test_run_analysis_with_special_characters_in_params():
      nei parametri URL. Il test si aspetta un errore 400 perché il
      directory won't exist, but validates that the request parsing is stable.
      """
-    # Owner/repo with valid GitHub special characters
+    # Owner/repo con caratteri speciali validi di GitHub
     payload = {
         'owner': 'owner-with-dash',
         'repo': 'repo_with_underscore'
@@ -541,7 +547,7 @@ def test_run_analysis_with_special_characters_in_params():
 
     response = client.post('/api/analyze', json=payload)
 
-    # Status 400 is expected because the repo hasn't been cloned/uploaded
+    # Stato 400 è previsto perché il repo non è stato clonato/caricato
     assert response.status_code == 400
 
 
@@ -554,7 +560,7 @@ def test_run_analysis_generic_exception(mock_scan):
     Verifica che l'API catturi l'errore e restituisca un codice di stato 500
     con un generico messaggio 'Internal error' al client.
     """
-    # Mock that raises a generic Exception (simulates unexpected error)
+    # Mock che solleva un'eccezione generica (simula un errore imprevisto)
     mock_scan.side_effect = RuntimeError("Unexpected error during scan")
 
     payload = {'owner': 'errorowner', 'repo': 'errorrepo'}
@@ -1034,7 +1040,7 @@ def test_regenerate_analysis_generic_exception(cleanup_test_repos):
     4. Estrai fisicamente lo ZIP restituito per verificare l'integrità del contenuto interno.
     """
     with patch('app.controllers.analysis.perform_regeneration') as mock_regen:
-        # Mock that raises generic Exception
+        # Mock che solleva un'eccezione generica (simula un errore imprevisto)
         mock_regen.side_effect = RuntimeError("Unexpected error during regeneration")
 
         payload = {
@@ -1108,7 +1114,7 @@ def test_download_repo_success_integration(create_test_repo, cleanup_test_repos)
         readme_content = zip_file.read('downloadowner_downloadrepo/README.md').decode('utf-8')
         assert '# Download Test' in readme_content
 
-def test_download_repo_repository_not_found(_msg_matches):
+def test_download_repo_repository_not_found():
     """
      Test di gestione degli errori: Tentativo di download di un repository non esistente.
 

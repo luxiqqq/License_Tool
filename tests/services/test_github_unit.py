@@ -18,10 +18,10 @@ class TestHandleRemoveReadonly:
         test_file = tmp_path / "readonly_file.txt"
         test_file.write_text("test content")
 
-        # Make the file readonly
+        # Make the file readonly (0o444 = read only for everyone)
         os.chmod(test_file, 0o444)
 
-        # Mock the removal function
+        # Mock the removal function (e.g., os.unlink)
         mock_func = MagicMock()
 
         # We also verify that os.chmod is called inside the helper to make it writable
@@ -43,8 +43,9 @@ class TestCloneRepo:
     @patch("app.services.github.github_client.shutil.rmtree")
     @patch("app.services.github.github_client.os.path.exists")
     @patch("app.services.github.github_client.os.makedirs")
-    def test_clone_repo_success(self, mock_makedirs, mock_exists, mock_rmtree, mock_clone_from, tmp_path):
-        """Testa clone_repo riuscito."""
+    def test_clone_repo_success(self, mock_makedirs, mock_exists, mock_rmtree, mock_clone_from):
+        """Test successful clone_repo (happy path)."""
+        # Scenario: Directory does not exist, clone succeeds
         mock_exists.return_value = False
         mock_clone_from.return_value = None
 
@@ -64,14 +65,16 @@ class TestCloneRepo:
     @patch("app.services.github.github_client.shutil.rmtree")
     @patch("app.services.github.github_client.os.path.exists")
     @patch("app.services.github.github_client.os.makedirs")
-    def test_clone_repo_with_cleanup(self, mock_makedirs, mock_exists, mock_rmtree, mock_clone_from, tmp_path):
-        """Testa clone_repo con pulizia della directory esistente."""
+    def test_clone_repo_with_cleanup(self, mock_makedirs, mock_exists, mock_rmtree, mock_clone_from):
+        """Test clone_repo handles existing directory cleanup."""
+        # Scenario: Directory exists, must be removed before cloning
         mock_exists.return_value = True
         mock_clone_from.return_value = None
 
         result = clone_repo("testowner", "testrepo")
 
         assert result.success is True
+        # Verify rmtree was called to clean up
         mock_rmtree.assert_called_once()
         mock_clone_from.assert_called_once()
 
@@ -79,22 +82,24 @@ class TestCloneRepo:
     @patch("app.services.github.github_client.os.path.exists")
     @patch("app.services.github.github_client.os.makedirs")
     def test_clone_repo_git_error(self, mock_makedirs, mock_exists, mock_clone_from):
-        """Testa clone_repo con errore Git."""
+        """Test clone_repo handling of GitCommandError."""
         mock_exists.return_value = False
+        # Simulate Git error (e.g. auth failed)
         mock_clone_from.side_effect = GitCommandError("clone", "Authentication failed")
 
         result = clone_repo("testowner", "testrepo")
 
         assert result.success is False
         assert result.error is not None
-        assert "clone" in result.error
+        assert "Authentication failed" in result.error
 
     @patch("app.services.github.github_client.Repo.clone_from")
     @patch("app.services.github.github_client.shutil.rmtree")
     @patch("app.services.github.github_client.os.path.exists")
     @patch("app.services.github.github_client.os.makedirs")
     def test_clone_repo_filesystem_error(self, mock_makedirs, mock_exists, mock_rmtree, mock_clone_from):
-        """Testa clone_repo con errore del file system."""
+        """Test clone_repo handling of OSError."""
+        # Scenario: Directory exists, but rmtree fails with OSError
         mock_exists.return_value = True
         mock_rmtree.side_effect = OSError("Permission denied")
 

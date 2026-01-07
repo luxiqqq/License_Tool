@@ -1,7 +1,3 @@
-"""
-test: services/compatibility/matrix.py
-"""
-
 import pytest
 import os
 import sys
@@ -377,7 +373,7 @@ def test_load_matrix_normalize_symbol_exception(monkeypatch):
 
 # Test for _read_from_filesystem exception handling (e.g., read permission error)
 def test_read_from_filesystem_exception(monkeypatch):
-    """Verify that exceptions during filesystem read are caught and logged"""
+    """Verifica che le eccezioni durante la lettura del file system siano catturate e registrate"""
     # Force os.path.exists to True
     monkeypatch.setattr("os.path.exists", lambda x: True)
 
@@ -390,14 +386,14 @@ def test_read_from_filesystem_exception(monkeypatch):
 
 # Test for _read_from_resources when resources module is not available (ImportError)
 def test_read_from_resources_module_none(monkeypatch):
-    """Verify that _read_from_resources returns None if resources module is None"""
+    """Verifica che _read_from_resources restituisca None se il modulo resources è None"""
     monkeypatch.setattr(matrix, "resources", None)
     result = matrix._read_from_resources()
     assert result is None
 
 # Test for _read_from_resources when __package__ is not set
 def test_read_from_resources_no_package(monkeypatch):
-    """Verify that _read_from_resources returns None if __package__ is not set"""
+    """Verifica che _read_from_resources restituisca None se __package__ non è impostato"""
     # Ensure resources is not None
     monkeypatch.setattr(matrix, "resources", MagicMock())
     monkeypatch.setattr(matrix, "__package__", None)
@@ -406,7 +402,7 @@ def test_read_from_resources_no_package(monkeypatch):
 
 # Test for _read_from_resources generic exception (not FileNotFoundError)
 def test_read_from_resources_generic_exception(monkeypatch):
-    """Verify that generic exceptions during resource reading are caught"""
+    """Verifica che le eccezioni generiche durante la lettura delle risorse siano catturate"""
     monkeypatch.setattr(matrix, "resources", MagicMock())
     monkeypatch.setattr(matrix, "__package__", "app.services.compatibility")
 
@@ -419,8 +415,8 @@ def test_read_from_resources_generic_exception(monkeypatch):
 
 def test_import_resources_importerror():
     """
-    Verify that if importlib.resources cannot be imported, resources is set to None.
-    This test reloads the module in a controlled environment to hit the 'except ImportError' block.
+    Verifica che se importlib.resources non può essere importato, resources sia impostato a None.
+    Questo test ricarica il modulo in un ambiente controllato per colpire il blocco 'except ImportError'.
     """
     # Store reference to the real module to restore it later
     real_module = sys.modules.get('app.services.compatibility.matrix')

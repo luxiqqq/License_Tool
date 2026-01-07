@@ -26,7 +26,7 @@ def client():
     return TestClient(app)
 
 # ==================================================================================
-#                          SUITE DI TEST: SCANSIONE LICENZE
+#                          TEST SUITE: LICENSE SCANNING
 # ==================================================================================
 
 class TestIntegrationScanner:

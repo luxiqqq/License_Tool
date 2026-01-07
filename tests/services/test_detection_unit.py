@@ -98,6 +98,7 @@ class TestRunScancode:
 
             # Execute
             result = run_scancode(repo_path)
+
             # Verify subprocess was called with correct parameters
             assert mock_popen.called
             cmd_args = mock_popen.call_args[0][0]
@@ -687,7 +688,7 @@ class TestDetectMainLicenseScancode:
         assert result == "UNKNOWN"
 
 # ==================================================================================
-#                    CLASSE DI TEST: ESTRAI LICENZE FILE
+#                    TEST CLASS: EXTRACT FILE LICENSES
 # ==================================================================================
 
 class TestExtractFileLicenses:

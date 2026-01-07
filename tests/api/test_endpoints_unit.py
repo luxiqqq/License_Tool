@@ -7,10 +7,11 @@ garantendo che gli endpoint API rispondano correttamente e comunichino efficacem
 con i servizi backend mockati.
 
 La suite copre:
-1. Autenticazione OAuth GitHub (Redirect e Callback).
-2. Gestione archivi ZIP (Caricamento e validazione).
-3. Ciclo di vita dell'analisi (Scansione licenze e validazione schema).
+1. Autenticazione OAuth GitHub (Reindirizzamento e Callback).
+2. Gestione Archivi ZIP (Caricamento e validazione).
+3. Ciclo di Vita dell'Analisi (Scansione licenze e validazione schema).
 4. Post-elaborazione (Rigenerazione codice e download artefatti).
+5. Endpoint di Clonazione (Validazione ed esecuzione).
 """
 
 import pytest
@@ -306,8 +307,8 @@ def test_download_missing_repo(mock_download):
 
 def test_download_missing_params(mock_download):
     """
-    Verifies input validation for the /download endpoint.
-    If 'owner' or 'repo' are missing, it should return 400.
+    Verifica la validazione dell'input per l'endpoint /download.
+    Se 'owner' o 'repo' mancano, dovrebbe restituire 400.
     """
     response = client.post("/api/download", json={"owner": "only_owner"})
     assert response.status_code == 400
@@ -409,7 +410,6 @@ def test_regenerate_invalid_format():
         "main_license": "N/A",
         "issues": []
     }
-
     response = client.post("/api/regenerate", json=payload)
 
     assert response.status_code == 400
@@ -710,7 +710,7 @@ def test_suggest_license_without_detected_licenses():
 
 def test_clone_success(mock_cloning):
     """
-    Verifies the repository cloning endpoint success path.
+    Verifica il percorso di successo dell'endpoint di clonazione repository.
     """
     mock_cloning.return_value = "/tmp/cloned/repo"
 
@@ -723,7 +723,7 @@ def test_clone_success(mock_cloning):
 
 def test_clone_missing_params():
     """
-    Verifies validation for missing parameters in clone endpoint.
+    Verifica la validazione per parametri mancanti nell'endpoint clone.
     """
     response = client.post("/api/clone", json={"owner": "test"})  # Missing repo
     assert response.status_code == 400
@@ -732,7 +732,7 @@ def test_clone_missing_params():
 
 def test_clone_value_error(mock_cloning):
     """
-    Verifies handling of ValueError during cloning (e.g., repo not found).
+    Verifica la gestione di ValueError durante la clonazione (ad es., repo non trovato).
     """
     mock_cloning.side_effect = ValueError("Git error")
     response = client.post("/api/clone", json={"owner": "t", "repo": "r"})
@@ -742,7 +742,7 @@ def test_clone_value_error(mock_cloning):
 
 def test_clone_internal_error(mock_cloning):
     """
-    Verifies 500 handling for unexpected errors during cloning.
+    Verifica la gestione 500 per errori imprevisti durante la clonazione.
     """
     mock_cloning.side_effect = Exception("System failure")
     response = client.post("/api/clone", json={"owner": "t", "repo": "r"})
@@ -752,7 +752,7 @@ def test_clone_internal_error(mock_cloning):
 
 def test_download_internal_error(mock_download):
     """
-    Verifies that generic exceptions in download_repo are caught and returned as 500.
+    Verifica che le eccezioni generiche in download_repo siano catturate e restituite come 500.
     """
     mock_download.side_effect = Exception("Disk failure")
     response = client.post("/api/download", json={"owner": "u", "repo": "r"})
@@ -763,8 +763,8 @@ def test_download_internal_error(mock_download):
 
 def test_upload_zip_http_exception_reraise(mock_upload_zip):
     """
-    Verifies that HTTPExceptions raised by the service are re-raised transparently.
-    This covers the 'except HTTPException: raise' block in upload_zip.
+    Verifica che le HTTPExceptions sollevate dal servizio siano ri-sollevate in modo trasparente.
+    Questo copre il blocco 'except HTTPException: raise' in upload_zip.
     """
     # Simulate a specific HTTP error from the service layer
     mock_upload_zip.side_effect = HTTPException(status_code=418, detail="I'm a teapot")
@@ -778,7 +778,7 @@ def test_upload_zip_http_exception_reraise(mock_upload_zip):
 
 def test_upload_zip_internal_error(mock_upload_zip):
     """
-    Verifies 500 handling for unexpected errors during zip upload.
+    Verifica la gestione 500 per errori imprevisti durante il caricamento ZIP.
     """
     mock_upload_zip.side_effect = Exception("Extraction failed")
 
@@ -795,7 +795,7 @@ def test_upload_zip_internal_error(mock_upload_zip):
 
 def test_root_endpoint():
     """
-    Test the root endpoint ("/") to ensure the API is running.
+    Testa l'endpoint root ("/") per garantire che l'API sia in esecuzione.
     """
     response = client.get("/")
     assert response.status_code == 200

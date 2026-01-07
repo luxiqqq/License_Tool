@@ -115,12 +115,13 @@ def test_perform_upload_zip_corrupted_file():
     assert "corrupted" in exc.value.detail
 
 
-def test_perform_upload_zip_cleanup_existing_dir(tmp_path):
+def test_perform_upload_zip_preventive_cleanup(tmp_path):
     """
     Verifica il comportamento idempotente durante l'estrazione ZIP.
 
-    Garantisce che se una directory per il repository esiste già, venga
-    rimossa prima di estrarre il nuovo contenuto ZIP per evitare dati obsoleti.
+    Garantisce che se una directory di destinazione esiste già da un'esecuzione precedente,
+    venga completamente rimossa prima di elaborare il nuovo file ZIP. Questo previene
+    la mescolanza di vecchi artefatti con nuovo codice sorgente.
     """
     owner, repo = "cleanup", "existing"
     base_dir = tmp_path / "clones"
@@ -142,17 +143,19 @@ def test_perform_upload_zip_cleanup_existing_dir(tmp_path):
     with patch("app.services.analysis_workflow.CLONE_BASE_DIR", str(base_dir)):
         perform_upload_zip(owner, repo, mock_file)
 
+        # Verify: old file should be gone (preventive cleanup worked)
         assert not (target_dir / "old.txt").exists()
+        # Verify: new file should exist
         assert (target_dir / "new.txt").exists()
 
 
 def test_perform_upload_zip_rollback_on_failure(tmp_path):
     """
-    Verifies the rollback mechanism upon processing failure.
+    Verifica il meccanismo di rollback in caso di fallimento dell'elaborazione.
 
-    Ensures that if the directory is created during the process but a critical
-    error occurs (e.g., download interruption, copy failure), the partial
-    directory is removed to maintain a clean state.
+    Garantisce che se la directory viene creata durante il processo ma si verifica un errore critico
+    (ad es., interruzione del download, fallimento della copia), la directory parziale
+    venga rimossa per mantenere uno stato pulito.
     """
     base_dir = tmp_path / "clones"
     base_dir.mkdir()
@@ -166,7 +169,7 @@ def test_perform_upload_zip_rollback_on_failure(tmp_path):
     mock_file.filename = "valid.zip"
     mock_file.file = zip_buffer
 
-    # Side effect: creates the directory (simulating start) then crashes
+    # Side effect: crea la directory (simulando l'inizio) poi va in crash
     def side_effect_create_and_fail(src, dst, **kwargs):
         os.makedirs(dst)
         raise Exception("Copy failed halfway")
@@ -177,7 +180,7 @@ def test_perform_upload_zip_rollback_on_failure(tmp_path):
                 with pytest.raises(HTTPException):
                     perform_upload_zip("owner", "repo", mock_file)
 
-                # Verify: rmtree was called to clean up the mess
+                # Verifica: rmtree è stato chiamato per pulire il disastro
                 expected_target = str(base_dir / "owner_repo")
                 mock_rmtree.assert_called_with(expected_target)
 
@@ -619,8 +622,8 @@ def test_rescan_repository_multiple_issues(tmp_path):
 
 def test_perform_initial_scan_string_license_return(tmp_path):
     """
-    Verifies perform_initial_scan when license detection returns a simple string
-    (e.g., 'MIT') instead of a tuple. This covers the 'else' branch in detection handling.
+    Verifica perform_initial_scan quando il rilevamento licenze restituisce una semplice stringa
+    (ad es., 'MIT') invece di una tupla. Questo copre il ramo 'else' nella gestione del rilevamento.
     """
     owner, repo = "scan", "str_license"
     base_dir = tmp_path / "clones"
@@ -640,8 +643,8 @@ def test_perform_initial_scan_string_license_return(tmp_path):
 
 def test_perform_regeneration_repo_not_found(tmp_path):
     """
-    Verifies validation check for missing repository in regeneration workflow.
-    Covers the 'if not os.path.exists' check at the start of perform_regeneration.
+    Verifica il controllo di validazione per repository mancante nel flusso di rigenerazione.
+    Copre il controllo 'if not os.path.exists' all'inizio di perform_regeneration.
     """
     base_dir = tmp_path / "clones"
     base_dir.mkdir()
@@ -655,8 +658,8 @@ def test_perform_regeneration_repo_not_found(tmp_path):
 
 def test_regenerate_incompatible_files_with_repo_prefix_path(tmp_path):
     """
-    Tests path resolution logic when file_path starts with the repository name.
-    Covers the 'if fpath.startswith(repo_name)' branch in _regenerate_incompatible_files.
+    Testa la logica di risoluzione del percorso quando file_path inizia con il nome del repository.
+    Copre il ramo 'if fpath.startswith(repo_name)' in _regenerate_incompatible_files.
     """
     repo_name = "owner_repo"
     repo_path = tmp_path / repo_name
@@ -684,8 +687,8 @@ def test_regenerate_incompatible_files_with_repo_prefix_path(tmp_path):
 
 def test_regenerate_incompatible_files_os_error_handling(tmp_path):
     """
-    Tests specifically the OSError catch block (e.g., file permission issues)
-    during the regeneration loop.
+    Testa specificamente il blocco catch OSError (ad es., problemi di permessi file)
+    durante il ciclo di rigenerazione.
     """
     repo_path = tmp_path / "owner_repo"
     repo_path.mkdir()
@@ -703,7 +706,7 @@ def test_regenerate_incompatible_files_os_error_handling(tmp_path):
 
 def test_regenerate_incompatible_files_general_exception(tmp_path):
     """
-    Tests the generic Exception catch block in the regeneration loop.
+    Testa il blocco catch Exception generico nel ciclo di rigenerazione.
     """
     repo_path = tmp_path / "owner_repo"
     repo_path.mkdir()
