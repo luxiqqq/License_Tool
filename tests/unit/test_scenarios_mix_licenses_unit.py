@@ -1,12 +1,12 @@
 # ==============================================================================
-# SCENARI DI TEST: LICENZE MISTE E COPERTURA DEI CASI LIMITE
+# TEST SCENARIOS: MIXED LICENSES AND EDGE CASE COVERAGE
 # ==============================================================================
-# Questo modulo verifica la robustezza dell'algoritmo di rilevamento quando
-# incontra repository reali, che spesso presentano:
-# 1. Licenze dichiarate a livello radice (Licenza principale).
-# 2. Licenze divergenti in sottofile (Sostituzioni a livello di file).
-# 3. File non identificabili (Marcati esplicitamente come UNKNOWN).
-# 4. Asset binari o file senza metadati legali (None/Vuoto).
+# This module verifies the robustness of the detection algorithm when
+# encountering real-world repositories, which often feature:
+# 1. Declared root-level licenses (Main License).
+# 2. Divergent licenses in sub-files (File-level overrides).
+# 3. Unidentifiable files (Explicitly marked as UNKNOWN).
+# 4. Binary assets or files without legal metadata (None/Empty).
 # ==============================================================================
 
 import pytest
@@ -21,11 +21,11 @@ from app.services.scanner.license_ranking import (
 
 def test_detect_main_license_fallback_unknown():
     """
-     Scenario: Repository senza alcun file di licenza a livello radice (Repo non documentato).
+     Scenario: Repository without any root-level license file (Undocumented Repo).
 
-     Obiettivo:
-     Testare il comportamento di fallback. Se non esiste un file 'LICENSE', l'algoritmo
-     deve decidere se promuovere una licenza sorgente o restituire UNKNOWN.
+     Objective:
+     Test the fallback behavior. If no 'LICENSE' file exists, the algorithm
+     must decide whether to promote a source license or return UNKNOWN.
      """
 
     mock_scancode_output_bad = {
@@ -56,15 +56,15 @@ def test_detect_main_license_fallback_unknown():
         pass
 
 # ==================================================================================
-#                    TEST DI INTEGRAZIONE: RANKING LICENZE
+#                    INTEGRATION TESTS: LICENSE RANKING
 # ==================================================================================
 
 def test_license_ranking_integration_with_detection():
     """
-    Test di integrazione: Pipeline completa dal rilevamento al ranking.
+    Integration Test: Full pipeline from detection to ranking.
 
-    Verifica che le licenze rilevate con clausole OR siano correttamente
-    elaborate dall'algoritmo di ranking per selezionare quella più permissiva.
+    Verifies that licenses detected with OR clauses are correctly
+    processed by the ranking algorithm to select the most permissive one.
     """
     # Simulated ScanCode output with multiple licenses per file
     mock_scancode_output = {
@@ -112,10 +112,10 @@ def test_license_ranking_integration_with_detection():
 
 def test_license_ranking_preserves_single_licenses():
     """
-    Test di integrazione: File con licenza singola non vengono modificati.
+    Integration Test: Single license files are not modified.
 
-    Verifica che i file con una sola licenza rilevata passino attraverso
-    l'algoritmo di ranking invariati.
+    Verifies that files with only one detected license pass through
+    the ranking algorithm unchanged.
     """
     mock_scancode_output = {
         "files": [
@@ -139,10 +139,10 @@ def test_license_ranking_preserves_single_licenses():
 
 def test_license_ranking_with_unknown_licenses():
     """
-    Test di integrazione: Licenze sconosciute in espressioni OR.
+    Integration Test: Unknown licenses in OR expressions.
 
-    Verifica che quando una licenza in un'espressione OR è conosciuta
-    e l'altra è sconosciuta, venga selezionata quella conosciuta.
+    Verifies that when one license in an OR expression is known
+    and the other is unknown, the known one is selected.
     """
     mock_scancode_output = {
         "files": [
@@ -165,10 +165,10 @@ def test_license_ranking_with_unknown_licenses():
 
 def test_extract_licenses_complex_expressions():
     """
-    Test di integrazione: Estrazione di espressioni SPDX complesse.
+    Integration Test: Complex SPDX expressions extraction.
 
-    Verifica che espressioni SPDX annidate e complesse siano
-    correttamente analizzate nei componenti di licenza individuali.
+    Verifies that nested and complex SPDX expressions are
+    correctly parsed into individual license components.
     """
     # Test simple OR
     result = estract_licenses("MIT OR Apache-2.0")
@@ -186,10 +186,10 @@ def test_extract_licenses_complex_expressions():
 
 def test_full_analysis_pipeline_with_or_licenses():
     """
-    Test di integrazione: Pipeline di analisi completa con licenze OR.
+    Integration Test: Complete analysis pipeline with OR licenses.
 
-    Simula il flusso di lavoro completo dall'output ScanCode attraverso
-    filtraggio, estrazione, ranking e controllo di compatibilità.
+    Simulates the full workflow from ScanCode output through
+    filtering, extraction, ranking, and compatibility checking.
     """
     # ===== SETUP: Simulated ScanCode output with complex license scenarios =====
     mock_scancode_output = {

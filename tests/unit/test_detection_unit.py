@@ -1,15 +1,15 @@
 """
-Modulo di test unitario del servizio di rilevamento licenze.
+License Detection Service Unit Test Module.
 
-Questo modulo contiene test unitari per la logica di scansione e rilevamento in
-`app.services.scanner.detection`. Valida l'integrazione con ScanCode
-Toolkit, inclusa l'esecuzione del processo, l'analisi dell'output e l'estrazione
-di licenze primarie e secondarie.
+This module contains unit tests for the scanning and detection logic in
+`app.services.scanner.detection`. It validates the integration with ScanCode
+Toolkit, including process execution, output parsing, and the extraction
+of primary and secondary licenses.
 
-La suite è organizzata in tre categorie principali:
-1. Esecuzione ScanCode: Gestione di sottoprocessi, codici di uscita e pattern di ignoranza.
-2. Rilevamento licenza principale: Identificazione della licenza principale del progetto.
-3. Estrazione licenze file: Aggregazione delle licenze rilevate in espressioni SPDX.
+The suite is organized into three main categories:
+1. ScanCode Execution: Managing subprocesses, exit codes, and ignore patterns.
+2. Main License Detection: Identifying the primary project license.
+3. File License Extraction: Aggregating detected licenses into SPDX expressions.
 """
 
 import os
@@ -24,26 +24,26 @@ from app.services.scanner.detection import (
 
 
 # ==================================================================================
-#                          CLASSE DI TEST: ESEGUI SCANCODE
+#                          TEST CLASS: RUN SCANCODE
 # ==================================================================================
 
 class TestRunScancode:
     """
-    Suite di test per la funzione 'run_scancode'.
+    Test suite for the 'run_scancode' function.
 
-    Verifica l'esecuzione di sottoprocessi, I/O file, caricamento pattern di ignoranza,
-    e gestione degli errori per vari codici di uscita ScanCode.
+    Verifies subprocess execution, file I/O, ignore pattern loading,
+    and error handling for various ScanCode exit codes.
     """
 
     def test_run_scancode_success_with_patterns(self, tmp_path):
         """
-        Testa l'esecuzione riuscita di ScanCode con caricamento pattern di ignoranza.
+        Tests successful ScanCode execution with ignore patterns loaded.
 
-        Valida che:
-        - I pattern di ignoranza siano correttamente caricati da patterns_to_ignore.json
-        - Il comando ScanCode sia costruito con parametri corretti
-        - L'output JSON sia elaborato e ottimizzato (license_detections rimosso)
-        - La funzione restituisca dati JSON analizzati
+        Validates that:
+        - Ignore patterns are correctly loaded from patterns_to_ignore.json
+        - ScanCode command is built with correct parameters
+        - Output JSON is processed and optimized (license_detections removed)
+        - Function returns parsed JSON data
         """
         # Setup
         repo_path = str(tmp_path / "test_repo")
@@ -115,9 +115,9 @@ class TestRunScancode:
 
     def test_run_scancode_with_exit_code_1(self, tmp_path):
         """
-        Testa l'esecuzione ScanCode con codice di uscita 1 (avvertimenti non fatali).
+        Tests ScanCode execution with exit code 1 (non-fatal warnings).
 
-        Verifica che la funzione registri un avvertimento ma continui l'elaborazione.
+        Verifies that the function logs a warning but continues processing.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -150,9 +150,9 @@ class TestRunScancode:
 
     def test_run_scancode_critical_error(self, tmp_path):
         """
-        Testa l'esecuzione ScanCode con codice di uscita > 1 (errore critico).
+        Tests ScanCode execution with exit code > 1 (critical error).
 
-        Verifica che venga sollevato un RuntimeError con messaggio appropriato.
+        Verifies that a RuntimeError is raised with appropriate message.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -178,10 +178,10 @@ class TestRunScancode:
 
     def test_run_scancode_output_file_not_found(self, tmp_path):
         """
-        Testa la gestione degli errori quando ScanCode non genera il file di output.
+        Tests error handling when ScanCode doesn't generate output file.
 
-        Verifica che venga sollevato un RuntimeError quando il file JSON previsto
-        è mancante dopo l'esecuzione ScanCode.
+        Verifies that a RuntimeError is raised when the expected JSON file
+        is missing after ScanCode execution.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -206,8 +206,8 @@ class TestRunScancode:
 
     def test_run_scancode_fallback_to_license_rules(self, tmp_path):
         """
-        Testa il meccanismo di fallback a license_rules.json quando patterns_to_ignore.json
-        non è disponibile.
+        Tests fallback mechanism to license_rules.json when patterns_to_ignore.json
+        is not available.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -246,9 +246,9 @@ class TestRunScancode:
 
     def test_run_scancode_invalid_json_in_patterns(self, tmp_path):
         """
-        Testa la gestione di JSON non valido nel file pattern di ignoranza.
+        Tests handling of invalid JSON in ignore patterns file.
 
-        Verifica che la funzione continui senza pattern se JSON è malformato.
+        Verifies that the function continues without patterns if JSON is malformed.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -293,9 +293,9 @@ class TestRunScancode:
 
     def test_run_scancode_processing_error(self, tmp_path):
         """
-        Testa la gestione degli errori durante la fase di elaborazione JSON.
+        Tests error handling during JSON processing phase.
 
-        Verifica che gli errori di elaborazione siano catturati e ri-sollevati come RuntimeError.
+        Verifies that processing errors are caught and re-raised as RuntimeError.
         """
         repo_path = str(tmp_path / "test_repo")
         os.makedirs(repo_path, exist_ok=True)
@@ -393,23 +393,23 @@ class TestRunScancode:
 
 
 # ==================================================================================
-#                    CLASSE DI TEST: RILEVA LICENZA PRINCIPALE SCANCODE
+#                    TEST CLASS: DETECT MAIN LICENSE SCANCODE
 # ==================================================================================
 
 class TestDetectMainLicenseScancode:
     """
-    Suite di test per la funzione 'detect_main_license_scancode'.
+    Test suite for the 'detect_main_license_scancode' function.
 
-    Valida il rilevamento euristico della licenza principale del progetto,
-    inclusi dichiarazioni di pacchetto, punteggio profondità file e ponderazione basata sul nome.
+    Validates the heuristic-based detection of the main project license,
+    including package declarations, file depth scoring, and name-based weighting.
     """
 
     def test_detect_main_license_from_package(self):
         """
-        Testa il rilevamento della licenza principale da dichiarazione di pacchetto.
+        Tests detection of main license from package declaration.
 
-        Quando ScanCode rileva un pacchetto con declared_license_expression,
-        dovrebbe essere prioritizzato come fonte più affidabile.
+        When ScanCode detects a package with declared_license_expression,
+        it should be prioritized as the most reliable source.
         """
         data = {
             "packages": [
@@ -427,9 +427,9 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_from_root_license_file(self):
         """
-        Testa il rilevamento da file LICENSE alla radice del repository.
+        Tests detection from LICENSE file at repository root.
 
-        I file LICENSE a livello radice dovrebbero ricevere il peso più alto.
+        Root-level LICENSE files should receive the highest weight.
         """
         data = {
             "files": [
@@ -449,9 +449,9 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_prefers_root_over_nested(self):
         """
-        Testa che le licenze a livello radice siano preferite rispetto a quelle annidate.
+        Tests that root-level licenses are preferred over nested ones.
 
-        I file a profondità 0 dovrebbero vincere rispetto a licenze identiche a profondità maggiore.
+        Files at depth 0 should win over identical licenses at greater depth.
         """
         data = {
             "files": [
@@ -478,9 +478,9 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_ignores_low_confidence(self):
         """
-        Testa che i rilevamenti a bassa confidenza siano filtrati.
+        Tests that low-confidence detections are filtered out.
 
-        I file con percentage_of_license_text < 80% dovrebbero essere ignorati.
+        Files with percentage_of_license_text < 80% should be ignored.
         """
         data = {
             "files": [
@@ -506,9 +506,9 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_from_manifest_files(self):
         """
-        Testa il rilevamento da file manifest (package.json, setup.py, ecc.).
+        Tests detection from manifest files (package.json, setup.py, etc.).
 
-        Questi file dovrebbero ricevere peso alto anche senza dichiarazione di pacchetto.
+        These files should receive high weight even without package declaration.
         """
         data = {
             "files": [
@@ -527,9 +527,9 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_from_readme(self):
         """
-        Testa il rilevamento da file README.
+        Tests detection from README files.
 
-        I file README dovrebbero ricevere peso moderato poiché spesso menzionano licenze.
+        README files should receive moderate weight as they often mention licenses.
         """
         data = {
             "files": [
@@ -548,7 +548,7 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_ignores_blacklisted_dirs(self):
         """
-        Testa che i file in node_modules, vendor, test, docs siano ignorati.
+        Tests that files in node_modules, vendor, test, docs are ignored.
         """
         data = {
             "files": [
@@ -575,7 +575,7 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_returns_unknown_if_no_candidates(self):
         """
-        Testa che UNKNOWN sia restituito quando non vengono trovate licenze valide.
+        Tests that UNKNOWN is returned when no valid licenses are found.
         """
         data = {
             "files": [
@@ -591,7 +591,7 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_with_license_text_match(self):
         """
-        Testa che il flag is_license_text aumenti il peso in modo appropriato.
+        Tests that is_license_text flag increases weight appropriately.
         """
         data = {
             "files": [
@@ -615,7 +615,7 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_copying_file(self):
         """
-        Testa che i file COPYING siano correttamente riconosciuti.
+        Tests that COPYING files are properly recognized.
         """
         data = {
             "files": [
@@ -635,8 +635,8 @@ class TestDetectMainLicenseScancode:
 
     def test_detect_main_license_multiple_candidates_highest_weight_wins(self):
         """
-        Testa che quando esistono più candidati, venga selezionato quello con
-        peso cumulativo più alto.
+        Tests that when multiple candidates exist, the one with highest
+        cumulative weight is selected.
         """
         data = {
             "files": [
@@ -693,15 +693,15 @@ class TestDetectMainLicenseScancode:
 
 class TestExtractFileLicenses:
     """
-    Suite di test per la funzione 'extract_file_licenses'.
+    Test suite for the 'extract_file_licenses' function.
 
-    Valida l'estrazione e l'aggregazione delle informazioni di licenza per file
-    in espressioni SPDX.
+    Validates the extraction and aggregation of per-file license information
+    into SPDX expressions.
     """
 
     def test_extract_file_licenses_single_match(self):
         """
-        Testa l'estrazione di una singola licenza da un file.
+        Tests extraction of a single license from a file.
         """
         data = {
             "files": [
@@ -719,7 +719,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_multiple_matches_or_operator(self):
         """
-        Testa che più licenze nello stesso file siano combinate con OR.
+        Tests that multiple licenses in the same file are combined with OR.
         """
         data = {
             "files": [
@@ -742,7 +742,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_no_matches(self):
         """
-        Testa che i file senza corrispondenze di licenza siano esclusi dai risultati.
+        Tests that files without license matches are excluded from results.
         """
         data = {
             "files": [
@@ -758,7 +758,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_multiple_files(self):
         """
-        Testa l'estrazione attraverso più file.
+        Tests extraction across multiple files.
         """
         data = {
             "files": [
@@ -785,7 +785,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_null_license_spdx(self):
         """
-        Testa che le corrispondenze senza campo license_spdx siano ignorate.
+        Tests that matches without license_spdx field are ignored.
         """
         data = {
             "files": [
@@ -804,7 +804,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_empty_data(self):
         """
-        Testa la gestione di dati ScanCode vuoti.
+        Tests handling of empty ScanCode data.
         """
         data = {"files": []}
 
@@ -813,7 +813,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_missing_files_key(self):
         """
-        Testa la gestione di dati malformati senza chiave 'files'.
+        Tests handling of malformed data without 'files' key.
         """
         data = {}
 
@@ -822,7 +822,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_deduplication(self):
         """
-        Testa che gli identificatori SPDX duplicati nello stesso file siano deduplicati.
+        Tests that duplicate SPDX identifiers in the same file are deduplicated.
         """
         data = {
             "files": [
@@ -843,7 +843,7 @@ class TestExtractFileLicenses:
 
     def test_extract_file_licenses_complex_scenario(self):
         """
-        Testa uno scenario complesso con tipi di file misti e pattern di licenza.
+        Tests a complex scenario with mixed file types and license patterns.
         """
         data = {
             "files": [
@@ -880,6 +880,7 @@ class TestExtractFileLicenses:
     def test_extract_file_licenses_matches_but_no_valid_spdx(self):
         """
         Tests filtering when matches exist but contain no valid license keys.
+
         Covers the 'if not unique_spdx: continue' block.
         """
         data = {

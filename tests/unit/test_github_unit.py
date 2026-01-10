@@ -1,5 +1,5 @@
 """
-test: services/github/github_client.py
+test: services/github/test_github_client_unit.py
 """
 import os
 import stat
@@ -10,10 +10,10 @@ from app.services.github.github_client import clone_repo, _handle_remove_readonl
 
 
 class TestHandleRemoveReadonly:
-    """Test per la funzione handle_remove_readonly."""
+    """Tests for the handle_remove_readonly function."""
 
     def test_handle_remove_readonly_removes_readonly_flag(self, tmp_path):
-        """Verifica che la funzione rimuova il flag ReadOnly e chiami la funzione di rimozione."""
+        """Verify that the function removes the ReadOnly flag and calls the removal function."""
         # Create a test file
         test_file = tmp_path / "readonly_file.txt"
         test_file.write_text("test content")
@@ -37,7 +37,7 @@ class TestHandleRemoveReadonly:
 
 
 class TestCloneRepo:
-    """Test per la funzione clone_repo."""
+    """Tests for the clone_repo function."""
 
     @patch("app.services.github.github_client.Repo.clone_from")
     @patch("app.services.github.github_client.shutil.rmtree")

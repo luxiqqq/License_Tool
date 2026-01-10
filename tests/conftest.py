@@ -1,13 +1,13 @@
 """
 test: tests/conftest.py
 
-Configurazione condivisa e fixtures per la suite di test pytest.
+Shared configuration and fixtures for the pytest suite.
 
-Questo modulo fornisce:
-- Helper di utilità (es. `_msg_matches` per asserzioni di stringhe flessibili).
-- Mocking delle variabili d'ambiente globali per isolare i test dalla configurazione locale.
-- Patch di default per dipendenze di servizi complessi (come le matrici di compatibilità).
-- Oggetti mock riutilizzabili per i nodi di parsing SPDX (`MockNode`, `MockLeaf`, ecc.).
+This module provides:
+- Utility helpers (e.g., `_msg_matches` for flexible string assertion).
+- Global environment variable mocking to isolate tests from local configuration.
+- Default patches for complex service dependencies (like compatibility matrices).
+- Reusable mock objects for SPDX parsing nodes (`MockNode`, `MockLeaf`, etc.).
 """
 
 import pytest
@@ -21,9 +21,9 @@ from unittest.mock import patch
 @pytest.fixture(scope="session", autouse=True)
 def mock_env_vars():
     """
-    Fixture a scope session che mocka le variabili d'ambiente.
-    Garantisce che i test vengano eseguiti con una configurazione coerente e isolata
-    e previene l'uso accidentale di valori reali dal file .env.
+    Session-scoped fixture that mocks environment variables.
+    Ensures that tests run with a consistent, isolated configuration
+    and prevents accidental usage of real .env values.
     """
     with patch.dict(os.environ, {
         "GITHUB_CLIENT_ID": "test_id",
@@ -45,27 +45,27 @@ def mock_env_vars():
 @pytest.fixture(autouse=True)
 def patch_config_variables(tmp_path):
     """
-    Fixture autouse che patcha le variabili di configurazione in `app.utility.config`
-    e nei moduli dipendenti.
+    Autouse fixture that patches configuration variables in `app.utility.config`
+    and dependent modules.
 
-    Questo è necessario perché `config.py` carica le variabili d'ambiente al momento
-    dell'importazione. Questa fixture garantisce che tutti i moduli utilizzino
-    directory temporanee di test create tramite `tmp_path`.
+    This is necessary because `config.py` loads environment variables at import time.
+    This fixture ensures that all modules use temporary test directories created
+    via `tmp_path`.
 
     Args:
-        tmp_path: Fixture pytest che fornisce una directory temporanea unica.
+        tmp_path: Pytest fixture providing a temporary unique directory.
 
     Yields:
-        str: Il percorso alla directory di clonazione temporanea.
+        str: The path to the temporary clone directory.
     """
     test_clone_dir = str(tmp_path / "test_clones")
     test_output_dir = str(tmp_path / "test_output")
 
-    # Crea le directory di test
+    # Create test directories
     os.makedirs(test_clone_dir, exist_ok=True)
     os.makedirs(test_output_dir, exist_ok=True)
 
-    # Patcha i moduli che importano CLONE_BASE_DIR direttamente
+    # Patch modules that import CLONE_BASE_DIR directly
     with patch("app.utility.config.CLONE_BASE_DIR", test_clone_dir), \
             patch("app.utility.config.OUTPUT_BASE_DIR", test_output_dir), \
             patch("app.services.analysis_workflow.CLONE_BASE_DIR", test_clone_dir), \
@@ -78,24 +78,24 @@ def patch_config_variables(tmp_path):
 @pytest.fixture(autouse=True)
 def _default_patches(monkeypatch, complex_matrix_data):
     """
-    Fixture autouse che applica mock di default per funzioni di servizio comuni.
+    Autouse fixture applying default mocks for common service functions.
 
-    Mocka `normalize_symbol` come un semplice pass-through/strip e
-    `get_matrix` per restituire i dati della fixture di test. Questo riduce il boilerplate
-    nei singoli test unitari.
+    It mocks `normalize_symbol` to be a simple pass-through/strip and
+    `get_matrix` to return the test fixture data. This reduces boilerplate
+    in individual unit tests.
 
     Args:
-        monkeypatch: Fixture pytest per il patching.
-        complex_matrix_data: Fixture che fornisce la matrice di compatibilità mock.
+        monkeypatch: Pytest fixture for patching.
+        complex_matrix_data: Fixture providing the mock compatibility matrix.
     """
-    # Normalize di default: identity/strip
+    # Default normalize: identity/strip
     normalize_mock = lambda s: s.strip() if isinstance(s, str) else s
 
     monkeypatch.setattr("app.services.compatibility.evaluator.normalize_symbol", normalize_mock)
     monkeypatch.setattr("app.services.compatibility.checker.normalize_symbol", normalize_mock)
     monkeypatch.setattr("app.services.compatibility.parser_spdx.normalize_symbol", normalize_mock)
 
-    # get_matrix di default: restituisce i dati della fixture
+    # Default get_matrix: returns fixture data
     matrix_mock = lambda: complex_matrix_data
 
     monkeypatch.setattr("app.services.compatibility.evaluator.get_matrix", matrix_mock)
@@ -105,63 +105,63 @@ def _default_patches(monkeypatch, complex_matrix_data):
 
 
 # ==============================================================================
-# FIXTURE DATI
+# DATA FIXTURES
 # ==============================================================================
 
 @pytest.fixture
 def complex_matrix_data():
     """
-    Fornisce una matrice di compatibilità mock per testare la logica di valutazione.
-    Copre scenari 'yes', 'no' e 'conditional'.
+    Provides a mock compatibility matrix for testing evaluation logic.
+    Covers 'yes', 'no', and 'conditional' scenarios.
 
     Returns:
-        dict: Un dizionario che rappresenta la matrice di compatibilità.
+        dict: A dictionary representing the compatibility matrix.
     """
     return {
         "MIT": {
             "MIT": "yes",
             "Apache-2.0": "yes",
-            "GPL-3.0": "no",  # Permissivo vs Copyleft Forte
+            "GPL-3.0": "no",  # Permissive vs Strong Copyleft
             "GPL-3.0-or-later": "no",
             "LGPL-2.1": "conditional",
             "Proprietary": "no"
         },
         "GPL-3.0": {
-            "MIT": "yes",  # GPL può includere MIT
+            "MIT": "yes",  # GPL can include MIT
             "GPL-3.0": "yes",
-            "Apache-2.0": "no",  # Simulazione incompatibilità V2 vs V3
+            "Apache-2.0": "no",  # V2 vs V3 incompatibility simulation
             "Proprietary": "no"
         }
     }
 
 
 # ==============================================================================
-# CLASSI MOCK NODE (PARSER SPDX)
+# MOCK NODE CLASSES (SPDX PARSER)
 # ==============================================================================
 
 @pytest.fixture
 def MockNode():
-    """Restituisce la classe Node dal modulo parser."""
+    """Returns the Node class from the parser module."""
     from app.services.compatibility import parser_spdx
     return parser_spdx.Node
 
 
 @pytest.fixture
 def MockLeaf():
-    """Restituisce la classe Leaf dal modulo parser."""
+    """Returns the Leaf class from the parser module."""
     from app.services.compatibility import parser_spdx
     return parser_spdx.Leaf
 
 
 @pytest.fixture
 def MockAnd():
-    """Restituisce la classe And dal modulo parser."""
+    """Returns the And class from the parser module."""
     from app.services.compatibility import parser_spdx
     return parser_spdx.And
 
 
 @pytest.fixture
 def MockOr():
-    """Restituisce la classe Or dal modulo parser."""
+    """Returns the Or class from the parser module."""
     from app.services.compatibility import parser_spdx
     return parser_spdx.Or
