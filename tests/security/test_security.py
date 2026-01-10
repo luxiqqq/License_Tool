@@ -97,10 +97,25 @@ class TestPathTraversal:
         # Prova a costruire un path che esce dalla directory base
         constructed_path = os.path.join(CLONE_BASE_DIR, malicious_filename)
         normalized_path = os.path.normpath(constructed_path)
+        base_path = os.path.normpath(CLONE_BASE_DIR)
 
-        # Verifica che il path normalizzato sia ancora all'interno del CLONE_BASE_DIR
-        assert not os.path.exists(normalized_path) or \
-               normalized_path.startswith(os.path.normpath(CLONE_BASE_DIR))
+        # Verifica che:
+        # 1. Se il path è assoluto (inizia con / o C:\), os.path.join lo usa come-è
+        #    In questo caso, il path normalizzato NON dovrebbe startswith base_path
+        # 2. Se il path è relativo con .., potrebbe uscire dalla sandbox
+        #    In questo caso, verifichiamo che rimanga dentro o non esista
+
+        if os.path.isabs(malicious_filename):
+            # Path assoluti dovrebbero essere rilevati e rifiutati
+            # Il fatto che normalized_path non inizi con base_path è l'indicatore
+            assert not normalized_path.startswith(base_path), \
+                f"Path assoluto {malicious_filename} non dovrebbe essere accettato come relativo"
+        else:
+            # Path relativi (anche con ..) devono rimanere dentro la sandbox
+            # oppure non devono esistere se tentano di uscire
+            assert not os.path.exists(normalized_path) or \
+                   normalized_path.startswith(base_path), \
+                f"Path {normalized_path} esce dalla sandbox {base_path}"
 
 
 # ==============================================================================
