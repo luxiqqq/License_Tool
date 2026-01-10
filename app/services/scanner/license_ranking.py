@@ -1,5 +1,15 @@
+"""
+License Ranking Module.
+
+This module provides functionality to select the most permissive license
+from a set of licenses detected in a file, based on a predefined ranking configuration.
+It helps in resolving multi-license scenarios (e.g., OR clauses) by defaulting to
+the option that offers the most freedom.
+"""
+
 import json
 import os
+import re
 from typing import Dict
 
 
@@ -25,8 +35,6 @@ def choose_most_permissive_license_in_file(licenses: Dict[str, str]) -> Dict[str
             licenses[file_path] = ranked_licenses[0]
 
     return licenses
-
-import re
 
 def estract_licenses(spdx_license: str) -> list[str]:
     """

@@ -105,7 +105,7 @@ const Callback = () => {
         }, 2000);
 
         try {
-            const response = await axios.post(`http://localhost:8000/api/analyze`, {
+            const response = await axios.post(`https://licensechecker-license-checker-tool.hf.space/api/analyze`, {
                 owner: cloneData.owner,
                 repo: cloneData.repo
             });

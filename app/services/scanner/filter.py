@@ -8,7 +8,6 @@ import json
 import re
 from app.utility.config import MINIMAL_JSON_BASE_DIR
 
-logger = logging.getLogger(__name__)
 
 def filter_licenses(scancode_data: dict, main_spdx: str, path: str) -> dict:
     """
@@ -179,15 +178,6 @@ def regex_filter(data: dict, detected_main_spdx: bool) -> dict:
             is_valid_declaration, spdx_tag_hit = _is_valid_match(matched_text, patterns)
 
             if not is_valid_declaration:
-                # --- MODIFICA: Logga prima di scartare ---
-                # Logga solo i primi 50 caratteri per non intasare i log
-                preview = (matched_text[:50] + '..') if len(matched_text) > 50 else matched_text
-                logger.warning(
-                    "Filtro: Scartato match in '%s' perché non valido. Testo: '%s'",
-                    file_obj.get('path'),
-                    preview
-                )
-                # -----------------------------------------
                 continue
 
             # Risolve l'ID SPDX inline

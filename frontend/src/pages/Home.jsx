@@ -92,8 +92,7 @@ const Home = () => {
         formData.append('uploaded_file', file);
 
         try {
-            // Invia il file ZIP al backend
-            const response = await axios.post('http://localhost:8000/api/zip', formData, {
+            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/zip', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

@@ -14,7 +14,7 @@ class TripleToggleSwitch extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            switchPosition: "center", // DEFAULT INTENZIONALE AL CENTRO (o basato su props se passato successivamente)
+            switchPosition: "center", // INTENTIONALLY DEFAULT TO CENTER (or props-based if passed later)
             animation: null
         };
     }
