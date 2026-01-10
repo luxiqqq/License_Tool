@@ -22,19 +22,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git
-      - name: Configure Git
-        run: |
-          git config --global user.email "ci@example.com"
-          git config --global user.name "CI Bot"
-          git config --global credential.helper ""
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
       - name: Run Unit Tests
         # Runs only fast unit tests, excluding slow acceptance tests
-        env:
-          GIT_TERMINAL_PROMPT: 0
         run: pytest -k "not acceptance"
 
   static-analysis:
