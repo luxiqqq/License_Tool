@@ -1,6 +1,5 @@
 from selenium import webdriver
 import os
-import shutil
 import time
 
 def before_all(context):

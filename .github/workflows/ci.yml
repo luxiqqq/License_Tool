@@ -123,14 +123,49 @@ jobs:
       # 4. Start Services in Background
       - name: Start Services
         run: |
-          # Start Backend (Port 8000)
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          # Start Backend (Port 8000) with logging
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+          BACKEND_PID=$!
+          echo "Backend started with PID: $BACKEND_PID"
           
-          # Start Frontend (Port 3000) using 'serve' on the dist folder
-          npx serve -s frontend/dist -l 3000 &
+          # Start Frontend (Port 3000) with logging
+          npx serve -s frontend/dist -l 3000 > frontend.log 2>&1 &
+          FRONTEND_PID=$!
+          echo "Frontend started with PID: $FRONTEND_PID"
           
-          # Wait for services to initialize
-          sleep 10
+          # Wait for Backend to be ready (max 60 seconds)
+          echo "Waiting for Backend to be ready..."
+          for i in {1..60}; do
+            if curl -f http://localhost:8000/docs > /dev/null 2>&1; then
+              echo "✅ Backend is ready after ${i} seconds"
+              break
+            fi
+            if [ $i -eq 60 ]; then
+              echo "❌ Backend failed to start after 60 seconds"
+              echo "=== Backend logs ==="
+              cat backend.log
+              exit 1
+            fi
+            sleep 1
+          done
+          
+          # Wait for Frontend to be ready (max 30 seconds)
+          echo "Waiting for Frontend to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3000 > /dev/null 2>&1; then
+              echo "✅ Frontend is ready after ${i} seconds"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Frontend failed to start after 30 seconds"
+              echo "=== Frontend logs ==="
+              cat frontend.log
+              exit 1
+            fi
+            sleep 1
+          done
+          
+          echo "✅ All services are ready!"
 
       # 5. Run Behave
       - name: Run Acceptance Tests (Behave)
@@ -140,3 +175,13 @@ jobs:
           # Overrides the default localhost:5173 with the CI port
           FRONTEND_URL: "http://localhost:3000"
         run: behave tests/acceptance/features
+
+      # 6. Show logs on failure
+      - name: Show Service Logs on Failure
+        if: failure()
+        run: |
+          echo "==================== BACKEND LOGS ===================="
+          cat backend.log || echo "No backend logs found"
+          echo ""
+          echo "==================== FRONTEND LOGS ===================="
+          cat frontend.log || echo "No frontend logs found"
