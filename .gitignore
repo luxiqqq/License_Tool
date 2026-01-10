@@ -68,3 +68,5 @@ venv/
 *.egg-info/
 # Directory di copertura HTML dei test
 /htmlcov/
+
+tests/acceptance/features/downloads/

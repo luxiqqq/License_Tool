@@ -46,7 +46,7 @@ def before_all(context):
 
 def after_step(context, step):
     time.sleep(1)
-    pass
+
 
 def after_all(context):
     context.browser.quit()
