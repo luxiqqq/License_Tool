@@ -10,6 +10,7 @@ jobs:
   # --- STAGE 1: Fast Feedback (Parallel Execution) ---
   test-backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Previene blocchi infiniti
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,6 +28,7 @@ jobs:
 
   test-security:
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Previene blocchi infiniti se Git richiede autenticazione
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,14 +47,22 @@ jobs:
         run: |
           git config --global user.email "ci@example.com"
           git config --global user.name "CI Bot"
-          git config --global credential.helper store
+          # Disabilita TUTTI i meccanismi di richiesta credenziali
+          git config --global credential.helper ""
+          git config --global core.askPass ""
+          # Previene qualsiasi prompt interattivo
+          export GIT_TERMINAL_PROMPT=0
+          export GIT_ASKPASS=echo
       - name: Run Security Tests ONLY
+        timeout-minutes: 5  # Timeout specifico per i test (max 5 minuti)
         env:
           GIT_TERMINAL_PROMPT: "0"
+          GIT_ASKPASS: "echo"
         run: pytest tests/security/ -v
 
   static-analysis:
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Previene blocchi infiniti
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,6 +80,7 @@ jobs:
 
   build-frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Build potrebbe richiedere più tempo
     defaults:
       run:
         working-directory: ./frontend
@@ -96,6 +107,7 @@ jobs:
   # --- STAGE 2: Acceptance Tests (Slow Feedback) ---
   acceptance-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # Test di accettazione possono richiedere più tempo
     # This job runs ONLY if all previous jobs succeeded (Fast Failing)
     needs: [test-backend, static-analysis, build-frontend]
     steps:
