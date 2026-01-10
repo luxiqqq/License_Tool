@@ -1,72 +1,36 @@
-# =============================
-# File .gitignore
-# Elenco dei file e delle cartelle da escludere dal controllo versione Git
-# Utile per evitare di committare file temporanei, di log, di ambiente o generati dagli editor
-# =============================
-
-# --- Log e file temporanei delle build ---
-# Cartella dei log generata dall'applicazione
+# Logs
 logs
-# Qualsiasi file con estensione .log
 *.log
-# Log di debug di npm
 npm-debug.log*
-# Log di debug di yarn
 yarn-debug.log*
-# Log di errore di yarn
 yarn-error.log*
-# Log di debug di pnpm
 pnpm-debug.log*
-# Log di debug di lerna
 lerna-debug.log*
 
-# Dipendenze frontend (Node.js)
 frontend/node_modules
-# Output di build SSR
 dist-ssr
-# File locali temporanei
 *.local
 
-# --- File e cartelle degli editor ---
-# Configurazioni locali di Visual Studio Code
+# Editor directories and files
 .vscode/*
-# Eccezione: mantieni la lista delle estensioni consigliate
 !.vscode/extensions.json
- # Configurazioni di JetBrains/IntelliJ
 .idea/
-# File di sistema MacOS
 .DS_Store
-# File di soluzione Visual Studio
 *.suo
-# File temporanei Node Tools for Visual Studio
 *.ntvs*
-# Progetti Node.js per Visual Studio
 *.njsproj
-# Soluzioni Visual Studio
 *.sln
-# Swap file temporanei
 *.sw?
-# File di progetto IntelliJ
 *.iml
 
-# Cache bytecode Python
 __pycache__/
-# File compilati Python
 *.py[cod]
-# File di classe Python generati
 *$py.class
-# Ambiente virtuale Python
 .venv/
-# Ambiente virtuale Python
 venv/
-# File di variabili d'ambiente
 .env
 
-# File di copertura dei test
 .coverage
-# Metadati dei pacchetti Python
 *.egg-info/
-# Directory di copertura HTML dei test
-/htmlcov/
 
 tests/acceptance/features/downloads/

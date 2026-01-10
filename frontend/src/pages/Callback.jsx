@@ -136,7 +136,7 @@ const Callback = () => {
 
         setIsRegenerating(true);
         try {
-            const regenResponse = await axios.post(`http://localhost:8000/api/regenerate`, analysisData);
+            const regenResponse = await axios.post(`https://licensechecker-license-checker-tool.hf.space/api/regenerate`, analysisData);
             setRegeneratedData(regenResponse.data);
         } catch (regenErr) {
             console.error("Regeneration failed:", regenErr);
@@ -149,7 +149,7 @@ const Callback = () => {
     const handleDownload = async () => {
         if (!cloneData) return;
         try {
-            const response = await axios.post('http://localhost:8000/api/download', {
+            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/download', {
                 owner: cloneData.owner,
                 repo: cloneData.repo
             }, { responseType: 'blob' });

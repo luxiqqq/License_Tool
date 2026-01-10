@@ -18,6 +18,12 @@ app~=0.0.1                 # Modulo locale dell'applicazione (se presente)
 httpx~=0.28.1              # Client HTTP asincrono e sincrono
 dotenv~=0.9.9              # (Obsoleto, preferire python-dotenv)
 
+python-multipart~=0.0.20
+pre-commit~=4.5.1
+
+behave~=1.3.3
+selenium~=4.39.0
+webdriver-manager~=4.0.2
 # --- Dipendenze per testing e sviluppo ---
 pytest~=9.0.1              # Framework di testing
 pytest-cov~=7.0.0          # Misurazione della copertura dei test

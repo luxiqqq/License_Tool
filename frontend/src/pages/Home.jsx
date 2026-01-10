@@ -44,8 +44,7 @@ const Home = () => {
         setLoading(true);
 
         try {
-            // Invia richiesta POST al backend per clonare il repository
-            const response = await axios.post('http://localhost:8000/api/clone', {
+            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/clone', {
                 owner,
                 repo
             });
@@ -54,7 +53,7 @@ const Home = () => {
             navigate('/callback', {
                 state: {
                     cloneData: response.data,
-                    source: 'clone'  // Indica che i dati provengono da clonazione
+                    source: 'clone'
                 }
             });
         } catch (error) {
@@ -102,7 +101,7 @@ const Home = () => {
             navigate('/callback', {
                 state: {
                     cloneData: response.data,
-                    source: 'upload'  // Indica che i dati provengono da upload
+                    source: 'upload'
                 }
             });
         } catch (error) {
@@ -143,7 +142,6 @@ const Home = () => {
     return (
         <div className="container">
             <div className="glass-panel form-group">
-                {/* Logo dell'applicazione */}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <img
                         src={logo}
@@ -151,8 +149,6 @@ const Home = () => {
                         style={{ width: '150px', height: '150px' }}
                     />
                 </div>
-
-                {/* Titolo e descrizione */}
                 <h1 style={{ fontSize: '3.5rem', marginBottom: '0.5rem', marginTop: '-1rem'}}>License Checker</h1>
                 <p style={{ fontSize: '1.12rem', marginBottom: '2rem' }}>Analyze GitHub repositories for license compatibility.</p>
 

@@ -64,6 +64,9 @@ def clone_repo(owner: str, repo: str) -> CloneResult:
             else:
                 shutil.rmtree(target_path, onerror=_handle_remove_readonly)  # pylint: disable=deprecated-argument
 
+        # Construct authenticated URL
+        # Note: x-access-token is the standard username for OAuth token usage in git
+        auth_url = f"https://github.com/{owner.strip()}/{repo.strip()}.git"
         # Costruisce l'URL autenticato
         # Nota: x-access-token è il nome utente standard per l'utilizzo del token OAuth in git
         auth_url = f"https://github.com/{owner.strip()}/{repo.strip()}.git"

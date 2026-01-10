@@ -116,7 +116,7 @@ Respond ONLY with the JSON object, nothing else."""
     try:
         response = call_ollama_deepseek(prompt)
 
-        # Pulisce la risposta (rimuove i blocchi di codice markdown se presenti)
+        # Clean up response (remove markdown code blocks if present)
         response = response.strip() if response else ""
         if not response:
             logger.error("LLM response is empty or None.")
