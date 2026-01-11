@@ -87,6 +87,9 @@ CALLBACK_URL="http://localhost:5173/callback"
 CLONE_BASE_DIR="./temp_clones"
 OUTPUT_BASE_DIR="./output"
 MINIMAL_JSON_BASE_DIR="./output/minimal_scans"
+
+# --- Configurazione API ---
+VITE_API_URL=http://localhost:8000
 ```
 ## 🛠️ Stack Tecnologico
 
