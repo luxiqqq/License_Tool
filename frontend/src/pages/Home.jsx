@@ -9,16 +9,8 @@ import logo from '../assets/Logo_Lu.svg';
 // Importa axios per le chiamate HTTP al backend
 import axios from 'axios';
 
-/**
- * Componente Home - Pagina iniziale dell'applicazione
- *
- * Permette all'utente di:
- * 1. Inserire owner e nome del repository GitHub
- * 2. Clonare un repository da GitHub per l'analisi
- * 3. Caricare un file ZIP contenente il codice sorgente
- *
- * Dopo l'operazione (clone o upload), naviga alla pagina Callback per mostrare i risultati
- */
+import { API_BASE_URL } from '../config';
+
 const Home = () => {
     // Stato per il nome del proprietario del repository
     const [owner, setOwner] = useState('');
@@ -44,7 +36,7 @@ const Home = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/clone', {
+            const response = await axios.post(`${API_BASE_URL}/api/clone`, {
                 owner,
                 repo
             });
@@ -91,7 +83,7 @@ const Home = () => {
         formData.append('uploaded_file', file);
 
         try {
-            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/zip', formData, {
+            const response = await axios.post(`${API_BASE_URL}/api/zip`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

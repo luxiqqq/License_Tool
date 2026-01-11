@@ -19,6 +19,8 @@ import {
     Download, HelpCircle
 } from 'lucide-react';
 
+import { API_BASE_URL } from '../config';
+
 // Funzione helper per estrarre le licenze uniche rilevate dai dati di analisi
 const extractDetectedLicenses = (analysisData) => {
     if (!analysisData || !analysisData.issues) return [];
@@ -105,7 +107,7 @@ const Callback = () => {
         }, 2000);
 
         try {
-            const response = await axios.post(`https://licensechecker-license-checker-tool.hf.space/api/analyze`, {
+            const response = await axios.post(`${API_BASE_URL}/api/analyze`, {
                 owner: cloneData.owner,
                 repo: cloneData.repo
             });
@@ -136,7 +138,7 @@ const Callback = () => {
 
         setIsRegenerating(true);
         try {
-            const regenResponse = await axios.post(`https://licensechecker-license-checker-tool.hf.space/api/regenerate`, analysisData);
+            const regenResponse = await axios.post(`${API_BASE_URL}/api/regenerate`, analysisData);
             setRegeneratedData(regenResponse.data);
         } catch (regenErr) {
             console.error("Regeneration failed:", regenErr);
@@ -149,7 +151,7 @@ const Callback = () => {
     const handleDownload = async () => {
         if (!cloneData) return;
         try {
-            const response = await axios.post('https://licensechecker-license-checker-tool.hf.space/api/download', {
+            const response = await axios.post(`${API_BASE_URL}/api/download`, {
                 owner: cloneData.owner,
                 repo: cloneData.repo
             }, { responseType: 'blob' });
