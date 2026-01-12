@@ -7,8 +7,8 @@ Feature: AI License Suggestion
   Scenario: Analyze unlicensed repo and get suggestion
     # Raggiungi la pagina del report (step riutilizzati)
     Given I am on the License Checker home page
-    When I enter "antgaldo" in the Owner field
-    And I enter "checkers" in the Repository field
+    When I enter "octocat" in the Owner field
+    And I enter "Hello-World" in the Repository field
     And I click on the Clone Repository button
     Then I should wait to see "Repository Cloned Successfully"
 
