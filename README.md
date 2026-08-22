@@ -82,6 +82,68 @@ Used for immediate installation of the operating environment (e.g., in CI/CD or 
 * **Core**: `fastapi`, `uvicorn`.
 * **Legal Analysis**: `license-expression` (SPDX).
 
+## 🚀 Getting Started / How to Run
+
+To get a local copy up and running, follow these steps.
+
+### Prerequisites
+Before starting, ensure you have the following installed on your local machine:
+* **[Docker](https://www.docker.com/)** (Recommended for easy setup)
+* **[Node.js & npm](https://nodejs.org/)** (If running the frontend manually)
+* **[Python 3.11+](https://www.python.org/)** (If running the backend manually)
+* **[Ollama](https://ollama.ai/)** (Required for the AI license recommendation features)
+
+### Option 1: Running via Docker (Recommended)
+This is the fastest way to start the entire application stack.
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/luxiqqq/License_Tool.git](https://github.com/luxiqqq/License_Tool.git)
+   cd License_Tool
+   ```
+2. **Make the script executable and run it:**
+  ```bash
+  chmod +x start-container.sh
+  ./start-container.sh
+  ```
+  *(Note: Ensure your local Docker daemon is running before executing the script).*
+  
+### Option 2: Running Locally (Manual Setup)
+If you prefer to run the backend and frontend separately on your host machine:
+
+1. **Start the Backend**
+Open a terminal in the root directory of the project:
+ ```bash
+# Install required Python dependencies
+pip install -r requirements.txt
+
+# Start the Python application
+python app/main.py
+```
+If you are using a framework like FastAPI or Uvicorn, you might need to run 
+```bash
+uvicorn app.main:app --reload
+```
+
+2. **Start the Frontend**
+Open a new, separate terminal and navigate to the frontend folder:
+ ```bash
+cd frontend
+
+# Install Node modules
+npm install
+
+# Start the Vite development server
+npm run dev
+```
+
+3. **Start Ollama (For AI Features)**
+To use the AI-powered license recommendations, ensure Ollama is running in the background with your preferred model:
+ ```bash
+ollama serve
+# Make sure to pull the specific model your app requires, e.g., ollama pull llama3
+```
+
 ## ☁️ Deployment
 
 The **Backend** is hosted on **Hugging Face Spaces** (via Docker SDK) to manage processing and LLM models, while the **Frontend** is distributed on Vercel to ensure optimal performance and global delivery.
