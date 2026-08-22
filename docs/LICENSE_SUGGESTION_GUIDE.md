@@ -1,133 +1,132 @@
-# Come Usare la Funzionalità di Suggerimento Licenza
+# How to Use the License Suggestion Feature
 
-## Quando appare il form di suggerimento?
+## When does the suggestion form appear?
 
-Il form per il suggerimento della licenza appare automaticamente quando:
+The license suggestion form automatically appears when:
 
-1. **Nessuna licenza principale rilevata**: Il sistema non trova un file LICENSE o COPYING valido nel repository
-2. **Licenze Unknown presenti**: Alcuni file hanno licenze che non possono essere identificate correttamente da ScanCode
+1. **No main license detected**: The system cannot find a valid `LICENSE` or `COPYING` file in the repository.
+2. **Unknown licenses present**: Some files have licenses that cannot be correctly identified by ScanCode.
 
-## Come usare il form
+## How to use the form
 
-### Step 1: Compilare le Permissions & Requirements
+### Step 1: Fill in Permissions & Requirements
 
-Seleziona i permessi che desideri per la tua licenza:
+Select the permissions you desire for your license:
 
-- ☑️ **Commercial use allowed**: Il software può essere usato per scopi commerciali
-- ☑️ **Modification allowed**: Il codice può essere modificato
-- ☑️ **Distribution allowed**: Il software può essere distribuito
-- ☐ **Patent grant required**: Include una concessione esplicita di brevetti
-- ☐ **Trademark use allowed**: Permette l'uso dei marchi del progetto
-- ☐ **Liability protection needed**: Include clausole di esclusione di responsabilità
+- ☑️ **Commercial use allowed**: The software can be used for commercial purposes.
+- ☑️ **Modification allowed**: The code can be modified.
+- ☑️ **Distribution allowed**: The software can be distributed.
+- ☐ **Patent grant required**: Includes an explicit grant of patent rights.
+- ☐ **Trademark use allowed**: Permits the use of the project's trademarks.
+- ☐ **Liability protection needed**: Includes disclaimer of liability clauses.
 
-### Step 2: Scegliere la Copyleft Preference
+### Step 2: Choose the Copyleft Preference
 
-Seleziona il livello di copyleft desiderato:
+Select the desired level of copyleft:
 
-- **No Copyleft (Permissive)**: Licenze permissive come MIT, Apache-2.0, BSD
-  - Massima libertà per chi usa il codice
-  - Nessun obbligo di rilasciare modifiche
-  - Esempi: MIT, Apache-2.0, BSD-3-Clause
+- **No Copyleft (Permissive)**: Permissive licenses like MIT, Apache-2.0, BSD
+  - Maximum freedom for those who use the code.
+  - No obligation to release modifications.
+  - Examples: MIT, Apache-2.0, BSD-3-Clause.
 
-- **Weak Copyleft (LGPL-style)**: Copyleft debole
-  - Le modifiche alla libreria devono essere condivise
-  - Il software che la usa può rimanere proprietario
-  - Esempi: LGPL-3.0, MPL-2.0
+- **Weak Copyleft (LGPL-style)**: Weak copyleft
+  - Modifications to the library must be shared.
+  - Software using it can remain proprietary.
+  - Examples: LGPL-3.0, MPL-2.0.
 
-- **Strong Copyleft (GPL-style)**: Copyleft forte
-  - Tutto il software derivato deve essere open source
-  - Stessa licenza deve essere applicata
-  - Esempi: GPL-3.0, AGPL-3.0
+- **Strong Copyleft (GPL-style)**: Strong copyleft
+  - All derivative software must be open source.
+  - The same license must be applied.
+  - Examples: GPL-3.0, AGPL-3.0.
 
-### Step 3: Additional Requirements (Opzionale)
+### Step 3: Additional Requirements (Optional)
 
-Puoi aggiungere requisiti aggiuntivi in testo libero, ad esempio:
-- "Il progetto deve essere compatibile con progetti Android"
-- "Voglio che le modifiche siano sempre condivise"
-- "Necessità di protezione brevettuale"
+You can add additional requirements in free text, for example:
+- "The project must be compatible with Android projects"
+- "I want modifications to always be shared"
+- "Need for patent protection"
 
 ### Step 4: Get Suggestion
 
-Clicca su "Get Suggestion" e l'AI analizzerà i tuoi requisiti per suggerirti la licenza più adatta.
+Click on "Get Suggestion" and the AI will analyze your requirements to suggest the most suitable license.
 
-## Interpretare il risultato
+## Interpreting the result
 
 ### Recommended License
-La licenza principale suggerita basata sui tuoi requisiti.
+The main suggested license based on your requirements.
 
 ### Explanation
-Una spiegazione dettagliata del perché questa licenza è appropriata per le tue esigenze.
+A detailed explanation of why this license is appropriate for your needs.
 
 ### Alternative Options
-Una lista di licenze alternative che potrebbero comunque soddisfare i tuoi requisiti.
+A list of alternative licenses that might still meet your requirements.
 
-## Esempi di scenari
+## Scenario Examples
 
-### Scenario 1: Progetto Open Source Aziendale
-**Requisiti:**
+### Scenario 1: Corporate Open Source Project
+**Requirements:**
 - ✅ Commercial use
 - ✅ Modification
 - ✅ Distribution
 - ✅ Patent grant
 - No Copyleft
 
-**Suggerimento probabile:** Apache-2.0
-- Permissiva ma con protezione brevettuale esplicita
+**Probable suggestion:** Apache-2.0
+- Permissive but with explicit patent protection.
 
-### Scenario 2: Libreria Open Source per la Community
-**Requisiti:**
+### Scenario 2: Open Source Library for the Community
+**Requirements:**
 - ✅ Commercial use
 - ✅ Modification
 - ✅ Distribution
 - Weak Copyleft
 
-**Suggerimento probabile:** LGPL-3.0
-- Modifiche alla libreria condivise, ma progetti che la usano possono rimanere proprietari
+**Probable suggestion:** LGPL-3.0
+- Modifications to the library are shared, but projects using it can remain proprietary.
 
-### Scenario 3: Software Completamente Libero
-**Requisiti:**
+### Scenario 3: Completely Free Software
+**Requirements:**
 - ✅ Commercial use
 - ✅ Modification
 - ✅ Distribution
 - Strong Copyleft
-- Additional: "Tutto il codice derivato deve rimanere open source"
+- Additional: "All derivative code must remain open source"
 
-**Suggerimento probabile:** GPL-3.0
-- Garantisce che tutto il software derivato sia open source
+**Probable suggestion:** GPL-3.0
+- Ensures that all derivative software is open source.
 
-### Scenario 4: Progetto Semplice e Permissivo
-**Requisiti:**
+### Scenario 4: Simple and Permissive Project
+**Requirements:**
 - ✅ Commercial use
 - ✅ Modification
 - ✅ Distribution
 - No Copyleft
 
-**Suggerimento probabile:** MIT
-- La licenza più semplice e permissiva
+**Probable suggestion:** MIT
+- The simplest and most permissive license.
 
-## Cosa fare dopo aver ricevuto il suggerimento
+## What to do after receiving the suggestion
 
-1. **Leggi attentamente la spiegazione** per capire le implicazioni della licenza
-2. **Considera le alternative** se la licenza suggerita non ti convince completamente
-3. **Ricerca ulteriori informazioni** sulla licenza suggerita (es. su choosealicense.com)
-4. **Aggiungi un file LICENSE** al tuo repository con il testo della licenza scelta
-5. **Aggiorna i file sorgente** con l'intestazione di copyright appropriata
+1. **Carefully read the explanation** to understand the implications of the license.
+2. **Consider the alternatives** if the suggested license doesn't completely convince you.
+3. **Research further information** on the suggested license (e.g., on choosealicense.com).
+4. **Add a LICENSE file** to your repository with the text of the chosen license.
+5. **Update the source files** with the appropriate copyright header.
 
-## Note importanti
+## Important Notes
 
-- ⚠️ Questo è un suggerimento AI, non consulenza legale
-- ⚠️ Consulta sempre un avvocato per decisioni legali importanti
-- ⚠️ Verifica la compatibilità con le licenze delle dipendenze
-- ⚠️ Alcune licenze hanno requisiti specifici (es. file NOTICE, copyright headers)
+- ⚠️ This is an AI suggestion, not legal advice.
+- ⚠️ Always consult a lawyer for important legal decisions.
+- ⚠️ Verify compatibility with dependency licenses.
+- ⚠️ Some licenses have specific requirements (e.g., NOTICE files, copyright headers).
 
-## Risorse utili
+## Useful Resources
 
-- [Choose a License](https://choosealicense.com/) - Guida visuale alle licenze
-- [SPDX License List](https://spdx.org/licenses/) - Lista completa delle licenze standard
-- [TLDRLegal](https://tldrlegal.com/) - Spiegazioni semplificate delle licenze
+- [Choose a License](https://choosealicense.com/) - Visual guide to licenses
+- [SPDX License List](https://spdx.org/licenses/) - Comprehensive list of standard licenses
+- [TLDRLegal](https://tldrlegal.com/) - Simplified explanations of licenses
 - [GNU License Recommendations](https://www.gnu.org/licenses/license-recommendations.html)
 
-## Supporto
+## Support
 
-Se hai domande o problemi con il suggerimento della licenza, apri una issue nel repository del progetto.
-
+If you have questions or issues with the license suggestion, please open an issue in the project repository.
