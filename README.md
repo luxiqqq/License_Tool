@@ -206,6 +206,12 @@ The tool includes experimental features for **automatic regeneration or modifica
 
 **The user is solely responsible for verifying final legal compliance.**
 
+---
+
+## Contributors
+
+This project and its performance analysis were developed by:
+
 * **Lucia Simeone**  - [GitHub](https://github.com/luxiqqq)
 * **Giuseppe Riccio**  - [GitHub](https://github.com/Giusk10)
 * **Vittoria Medugno**  - [GitHub](https://github.com/medugnov)
