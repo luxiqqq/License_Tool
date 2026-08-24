@@ -217,3 +217,5 @@ This project and its performance analysis were developed by:
 * **Vittoria Medugno**  - [medugnov](https://github.com/medugnov)
 * **Elisa Liparulo** - [enleyn](https://github.com/enleyn)
 * **Antonella Capone** - [aantok1](https://github.com/aantok1)
+
+*Disclaimer*: The main repository for this project is hosted at: [https://github.com/Giusk10/License_Tool](https://github.com/Giusk10/License_Tool)
